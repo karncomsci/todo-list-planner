@@ -6,6 +6,8 @@ package database
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Owner struct {
@@ -20,4 +22,20 @@ type Session struct {
 	OwnerID   int64
 	ExpiresAt time.Time
 	CreatedAt time.Time
+}
+
+type Task struct {
+	ID          int64
+	OwnerID     int64
+	Name        string
+	DueDate     time.Time
+	StartDate   *time.Time
+	StartTime   pgtype.Time
+	EndTime     pgtype.Time
+	Priority    string
+	Progress    int16
+	Note        string
+	CompletedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }

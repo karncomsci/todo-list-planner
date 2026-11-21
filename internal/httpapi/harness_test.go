@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
@@ -34,8 +35,26 @@ type testServer struct {
 
 func newTestServer(t *testing.T) *testServer {
 	t.Helper()
+	return newTestServerWith(t, httpapi.Options{})
+}
+
+// newTestServerAt pins the API clock, so "today" in Thailand is known (D23).
+func newTestServerAt(t *testing.T, now time.Time) *testServer {
+	t.Helper()
+	return newTestServerWith(t, httpapi.Options{Now: func() time.Time { return now }})
+}
+
+func newTestServerWith(t *testing.T, opts httpapi.Options) *testServer {
+	t.Helper()
 	pool := newTestDatabase(t)
-	return &testServer{t: t, app: httpapi.New(pool, httpapi.Options{}), pool: pool, queries: database.New(pool)}
+	return &testServer{t: t, app: httpapi.New(pool, opts), pool: pool, queries: database.New(pool)}
+}
+
+// signedInOwner creates an Owner and returns a client signed in as them.
+func (s *testServer) signedInOwner(email string) *client {
+	s.t.Helper()
+	s.createOwner(email, "correct-horse")
+	return s.signIn(email, "correct-horse")
 }
 
 // newTestDatabase creates an empty database, applies all migrations, and drops it after the test.

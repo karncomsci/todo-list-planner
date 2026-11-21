@@ -4,6 +4,7 @@ package httpapi
 import (
 	"context"
 	"time"
+	_ "time/tzdata" // Asia/Bangkok must load in a minimal container image
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
@@ -16,6 +17,8 @@ import (
 type Options struct {
 	// SecureCookie marks the session cookie Secure. Turn it on when the app is served over HTTPS.
 	SecureCookie bool
+	// Now is the clock; tests set it to pin "today". Defaults to time.Now.
+	Now func() time.Time
 }
 
 type server struct {
@@ -24,8 +27,25 @@ type server struct {
 	opts    Options
 }
 
+// thailand is the one time zone of the system (D9).
+var thailand = func() *time.Location {
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		panic(err)
+	}
+	return loc
+}()
+
+// today is the current date in Thailand, as YYYY-MM-DD.
+func (s *server) today() string {
+	return s.opts.Now().In(thailand).Format(dateLayout)
+}
+
 // New builds the Fiber app with every route under /api.
 func New(pool *pgxpool.Pool, opts Options) *fiber.App {
+	if opts.Now == nil {
+		opts.Now = time.Now
+	}
 	s := &server{pool: pool, queries: database.New(pool), opts: opts}
 	app := fiber.New(fiber.Config{
 		AppName:      "planner-api",
@@ -44,6 +64,8 @@ func New(pool *pgxpool.Pool, opts Options) *fiber.App {
 	// unknown path: a signed-out request learns nothing about which routes exist.
 	owned := api.Group("", s.requireOwner)
 	owned.Get("/session", s.currentOwner)
+	owned.Get("/tasks", s.listTasks)
+	owned.Post("/tasks", s.createTask)
 
 	return app
 }
