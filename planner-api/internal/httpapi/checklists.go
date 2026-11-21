@@ -129,3 +129,28 @@ func (s *server) getSettings(c fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"settings": Settings{WaterGoal: int(goal)}})
 }
+
+const (
+	minWaterGoal = 1
+	maxWaterGoal = 30
+)
+
+// saveSettings saves the Owner's settings: the Water Goal, 1 to 30 glasses (D28, story 57).
+func (s *server) saveSettings(c fiber.Ctx) error {
+	var req struct {
+		WaterGoal *int `json:"waterGoal"`
+	}
+	if err := c.Bind().JSON(&req); err != nil {
+		return errBadJSON
+	}
+	if req.WaterGoal == nil {
+		return validation("waterGoal", "required", "waterGoal is required")
+	}
+	if *req.WaterGoal < minWaterGoal || *req.WaterGoal > maxWaterGoal {
+		return validation("waterGoal", "out_of_range", fmt.Sprintf("waterGoal must be %d to %d", minWaterGoal, maxWaterGoal))
+	}
+	if err := s.queries.SetWaterGoal(c.Context(), database.SetWaterGoalParams{OwnerID: currentOwnerOf(c).ID, WaterGoal: int16(*req.WaterGoal)}); err != nil {
+		return err
+	}
+	return s.getSettings(c)
+}

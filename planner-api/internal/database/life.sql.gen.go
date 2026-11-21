@@ -112,3 +112,19 @@ func (q *Queries) SaveDailyChecklist(ctx context.Context, arg SaveDailyChecklist
 	)
 	return i, err
 }
+
+const setWaterGoal = `-- name: SetWaterGoal :exec
+INSERT INTO owner_settings (owner_id, water_goal)
+VALUES ($1, $2)
+ON CONFLICT (owner_id) DO UPDATE SET water_goal = EXCLUDED.water_goal
+`
+
+type SetWaterGoalParams struct {
+	OwnerID   int64
+	WaterGoal int16
+}
+
+func (q *Queries) SetWaterGoal(ctx context.Context, arg SetWaterGoalParams) error {
+	_, err := q.db.Exec(ctx, setWaterGoal, arg.OwnerID, arg.WaterGoal)
+	return err
+}

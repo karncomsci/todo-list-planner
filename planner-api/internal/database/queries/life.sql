@@ -23,3 +23,8 @@ RETURNING *;
 -- name: GetWaterGoal :one
 -- The Owner's Water Goal, 8 when never saved (D28, A4).
 SELECT coalesce((SELECT water_goal FROM owner_settings WHERE owner_id = sqlc.arg(owner_id)), 8)::smallint AS water_goal;
+
+-- name: SetWaterGoal :exec
+INSERT INTO owner_settings (owner_id, water_goal)
+VALUES (sqlc.arg(owner_id), sqlc.arg(water_goal))
+ON CONFLICT (owner_id) DO UPDATE SET water_goal = EXCLUDED.water_goal;

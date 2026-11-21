@@ -314,6 +314,11 @@ The Owner's settings (D28).
 
 - 200 `{ "settings": Settings }`
 
+`PUT /api/settings`: save the settings (story 57). The Daily Checklist shows this many glasses, and Reports compare the water average with it.
+
+- 200 `{ "settings": Settings }`
+- 422 on `waterGoal`: `required`, `out_of_range` (1 to 30 glasses)
+
 ### Reports
 
 The six Reports metrics for a period (D31), all calculated here (D32). The web turns the four period choices (this week, this month, this year, custom) into a range.

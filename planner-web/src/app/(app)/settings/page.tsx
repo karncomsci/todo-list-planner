@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CategoriesCard } from "@/components/settings/categories-card";
 import { PasswordCard } from "@/components/settings/password-card";
+import { WaterGoalCard } from "@/components/settings/water-goal-card";
 
 export const metadata: Metadata = { title: "ตั้งค่า · ปฏิทินตารางงาน" };
 
@@ -11,7 +12,10 @@ export default function SettingsPage() {
       <h1 className="mb-6 text-2xl font-semibold">ตั้งค่า</h1>
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <CategoriesCard />
-        <PasswordCard />
+        <div className="flex flex-col gap-6">
+          <WaterGoalCard />
+          <PasswordCard />
+        </div>
       </div>
     </>
   );

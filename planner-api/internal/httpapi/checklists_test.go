@@ -136,3 +136,38 @@ func TestChecklistAndSettingsNeedASession(t *testing.T) {
 	assertError(t, s.do(http.MethodPut, "/api/checklists/2026-11-21", map[string]any{}), http.StatusUnauthorized, "unauthorized")
 	assertError(t, s.do(http.MethodGet, "/api/settings", nil), http.StatusUnauthorized, "unauthorized")
 }
+
+func waterGoalOf(t *testing.T, c *client) any {
+	t.Helper()
+	return c.do(http.MethodGet, "/api/settings", nil).Body["settings"].(map[string]any)["waterGoal"]
+}
+
+// The Water Goal is saved per Owner, 1 to 30 glasses (D28, story 57).
+func TestSaveWaterGoal(t *testing.T) {
+	s := newTestServer(t)
+	owner := s.signedInOwner("owner@example.com")
+	other := s.signedInOwner("other@example.com")
+
+	res := owner.do(http.MethodPut, "/api/settings", map[string]any{"waterGoal": 10})
+	if res.Status != http.StatusOK || res.Body["settings"].(map[string]any)["waterGoal"] != float64(10) {
+		t.Fatalf("save: %d %v", res.Status, res.Body)
+	}
+	if goal := waterGoalOf(t, owner); goal != float64(10) {
+		t.Errorf("waterGoal = %v, want 10", goal)
+	}
+	if goal := waterGoalOf(t, other); goal != float64(8) {
+		t.Errorf("another Owner's waterGoal = %v, want the default 8", goal)
+	}
+
+	assertValidation(t, owner.do(http.MethodPut, "/api/settings", map[string]any{}), "waterGoal", "required")
+	assertValidation(t, owner.do(http.MethodPut, "/api/settings", map[string]any{"waterGoal": 0}), "waterGoal", "out_of_range")
+	assertValidation(t, owner.do(http.MethodPut, "/api/settings", map[string]any{"waterGoal": 31}), "waterGoal", "out_of_range")
+	if goal := waterGoalOf(t, owner); goal != float64(10) {
+		t.Errorf("rejected saves changed waterGoal to %v", goal)
+	}
+	for _, goal := range []int{1, 30} {
+		if res := owner.do(http.MethodPut, "/api/settings", map[string]any{"waterGoal": goal}); res.Status != http.StatusOK {
+			t.Errorf("waterGoal %d: %d %v", goal, res.Status, res.Body)
+		}
+	}
+}

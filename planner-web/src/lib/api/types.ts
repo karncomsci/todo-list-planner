@@ -206,6 +206,9 @@ export type SettingsResponse = {
   settings: Settings;
 };
 
+/** Saves every setting. */
+export type SettingsRequest = Settings;
+
 // Reports
 
 /** Tasks completed in one Monday-start week. */
