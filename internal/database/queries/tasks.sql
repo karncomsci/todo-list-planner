@@ -56,3 +56,40 @@ WHERE tasks.owner_id = sqlc.arg(owner_id)
   AND tasks.due_date >= sqlc.arg(from_date)::date
   AND coalesce(tasks.start_date, tasks.due_date) <= sqlc.arg(to_date)::date
 ORDER BY coalesce(tasks.start_date, tasks.due_date), tasks.start_time NULLS FIRST, tasks.id;
+
+-- name: ListOverdueTasks :many
+-- Every Overdue Task of the Owner, however old: due before today and not done
+-- (D23). Oldest due date first, then by name (story 37).
+SELECT sqlc.embed(tasks), categories.name AS category_name
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.owner_id = sqlc.arg(owner_id)
+  AND tasks.progress < 100
+  AND tasks.due_date < sqlc.arg(today)::date
+ORDER BY tasks.due_date, tasks.name, tasks.id;
+
+-- name: CountMonthTasks :one
+-- This month's summary: the Owner's Tasks due in the month, by Status, and
+-- those of them Overdue now (D21, D23, D30, story 38).
+SELECT
+    count(*)                                                   AS total,
+    count(*) FILTER (WHERE progress = 100)                     AS done,
+    count(*) FILTER (WHERE progress BETWEEN 1 AND 99)          AS in_progress,
+    count(*) FILTER (WHERE progress < 100 AND due_date < sqlc.arg(today)::date) AS overdue
+FROM tasks
+WHERE owner_id = sqlc.arg(owner_id)
+  AND due_date >= sqlc.arg(month_start)::date
+  AND due_date <  sqlc.arg(next_month_start)::date;
+
+-- name: CountMonthTasksByCategory :many
+-- The Tasks due in the month, counted per Category; uncategorised Tasks form
+-- one row with a null Category (D24, story 39). Largest first, then by name,
+-- with the uncategorised row last.
+SELECT tasks.category_id, categories.name AS category_name, count(*) AS task_count
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.owner_id = sqlc.arg(owner_id)
+  AND tasks.due_date >= sqlc.arg(month_start)::date
+  AND tasks.due_date <  sqlc.arg(next_month_start)::date
+GROUP BY tasks.category_id, categories.name
+ORDER BY (tasks.category_id IS NULL), count(*) DESC, lower(categories.name), tasks.category_id;

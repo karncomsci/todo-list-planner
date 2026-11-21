@@ -12,6 +12,97 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countMonthTasks = `-- name: CountMonthTasks :one
+SELECT
+    count(*)                                                   AS total,
+    count(*) FILTER (WHERE progress = 100)                     AS done,
+    count(*) FILTER (WHERE progress BETWEEN 1 AND 99)          AS in_progress,
+    count(*) FILTER (WHERE progress < 100 AND due_date < $1::date) AS overdue
+FROM tasks
+WHERE owner_id = $2
+  AND due_date >= $3::date
+  AND due_date <  $4::date
+`
+
+type CountMonthTasksParams struct {
+	Today          time.Time
+	OwnerID        int64
+	MonthStart     time.Time
+	NextMonthStart time.Time
+}
+
+type CountMonthTasksRow struct {
+	Total      int64
+	Done       int64
+	InProgress int64
+	Overdue    int64
+}
+
+// This month's summary: the Owner's Tasks due in the month, by Status, and
+// those of them Overdue now (D21, D23, D30, story 38).
+func (q *Queries) CountMonthTasks(ctx context.Context, arg CountMonthTasksParams) (CountMonthTasksRow, error) {
+	row := q.db.QueryRow(ctx, countMonthTasks,
+		arg.Today,
+		arg.OwnerID,
+		arg.MonthStart,
+		arg.NextMonthStart,
+	)
+	var i CountMonthTasksRow
+	err := row.Scan(
+		&i.Total,
+		&i.Done,
+		&i.InProgress,
+		&i.Overdue,
+	)
+	return i, err
+}
+
+const countMonthTasksByCategory = `-- name: CountMonthTasksByCategory :many
+SELECT tasks.category_id, categories.name AS category_name, count(*) AS task_count
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.owner_id = $1
+  AND tasks.due_date >= $2::date
+  AND tasks.due_date <  $3::date
+GROUP BY tasks.category_id, categories.name
+ORDER BY (tasks.category_id IS NULL), count(*) DESC, lower(categories.name), tasks.category_id
+`
+
+type CountMonthTasksByCategoryParams struct {
+	OwnerID        int64
+	MonthStart     time.Time
+	NextMonthStart time.Time
+}
+
+type CountMonthTasksByCategoryRow struct {
+	CategoryID   *int64
+	CategoryName *string
+	TaskCount    int64
+}
+
+// The Tasks due in the month, counted per Category; uncategorised Tasks form
+// one row with a null Category (D24, story 39). Largest first, then by name,
+// with the uncategorised row last.
+func (q *Queries) CountMonthTasksByCategory(ctx context.Context, arg CountMonthTasksByCategoryParams) ([]CountMonthTasksByCategoryRow, error) {
+	rows, err := q.db.Query(ctx, countMonthTasksByCategory, arg.OwnerID, arg.MonthStart, arg.NextMonthStart)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountMonthTasksByCategoryRow
+	for rows.Next() {
+		var i CountMonthTasksByCategoryRow
+		if err := rows.Scan(&i.CategoryID, &i.CategoryName, &i.TaskCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createTask = `-- name: CreateTask :one
 INSERT INTO tasks (owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at, category_id)
 VALUES (
@@ -127,6 +218,64 @@ func (q *Queries) GetTask(ctx context.Context, arg GetTaskParams) (GetTaskRow, e
 		&i.CategoryName,
 	)
 	return i, err
+}
+
+const listOverdueTasks = `-- name: ListOverdueTasks :many
+SELECT tasks.id, tasks.owner_id, tasks.name, tasks.due_date, tasks.start_date, tasks.start_time, tasks.end_time, tasks.priority, tasks.progress, tasks.note, tasks.completed_at, tasks.created_at, tasks.updated_at, tasks.category_id, categories.name AS category_name
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.owner_id = $1
+  AND tasks.progress < 100
+  AND tasks.due_date < $2::date
+ORDER BY tasks.due_date, tasks.name, tasks.id
+`
+
+type ListOverdueTasksParams struct {
+	OwnerID int64
+	Today   time.Time
+}
+
+type ListOverdueTasksRow struct {
+	Task         Task
+	CategoryName *string
+}
+
+// Every Overdue Task of the Owner, however old: due before today and not done
+// (D23). Oldest due date first, then by name (story 37).
+func (q *Queries) ListOverdueTasks(ctx context.Context, arg ListOverdueTasksParams) ([]ListOverdueTasksRow, error) {
+	rows, err := q.db.Query(ctx, listOverdueTasks, arg.OwnerID, arg.Today)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListOverdueTasksRow
+	for rows.Next() {
+		var i ListOverdueTasksRow
+		if err := rows.Scan(
+			&i.Task.ID,
+			&i.Task.OwnerID,
+			&i.Task.Name,
+			&i.Task.DueDate,
+			&i.Task.StartDate,
+			&i.Task.StartTime,
+			&i.Task.EndTime,
+			&i.Task.Priority,
+			&i.Task.Progress,
+			&i.Task.Note,
+			&i.Task.CompletedAt,
+			&i.Task.CreatedAt,
+			&i.Task.UpdatedAt,
+			&i.Task.CategoryID,
+			&i.CategoryName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listRecentTasks = `-- name: ListRecentTasks :many
