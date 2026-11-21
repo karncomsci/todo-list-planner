@@ -68,6 +68,7 @@ const thaiFormats = {
   weekday: { weekday: "long", day: "numeric", month: "long", year: "numeric" },
   monthYear: { month: "long", year: "numeric" },
   dayMonth: { day: "numeric", month: "long" },
+  dayMonthShort: { day: "numeric", month: "short" },
   year: { year: "numeric" },
 } as const satisfies Record<string, Intl.DateTimeFormatOptions>;
 

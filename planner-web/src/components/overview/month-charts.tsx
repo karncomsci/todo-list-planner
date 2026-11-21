@@ -1,6 +1,5 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
 import {
   Bar,
   BarChart,
@@ -13,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { quick } from "@/components/motion";
+import { shortName, tooltipItemStyle, tooltipStyle, useChartAnimation } from "@/components/charts";
 import type { MonthSummary, TaskStatus } from "@/lib/api/types";
 import { statusLabels } from "@/lib/tasks";
 
@@ -24,19 +23,6 @@ const statusColour: Record<TaskStatus, string> = {
   done: "var(--success)",
 };
 const statusOrder: TaskStatus[] = ["not_started", "in_progress", "done"];
-
-const tooltipStyle = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: "0.75rem",
-  color: "var(--text)",
-};
-
-/** Long Category names end in "…" beside the bars; the tooltip shows them whole. */
-function shortName(name: string): string {
-  const chars = Array.from(name);
-  return chars.length > 14 ? `${chars.slice(0, 13).join("")}…` : name;
-}
 
 type Props = {
   /** undefined while loading. */
@@ -49,12 +35,7 @@ type Props = {
  * not at all when the device asks for reduced motion (D7).
  */
 export function MonthCharts({ summary }: Props) {
-  const reduce = useReducedMotion() ?? false;
-  const animation = {
-    isAnimationActive: !reduce,
-    animationDuration: quick.duration * 1000,
-    animationEasing: "ease-out",
-  } as const;
+  const animation = useChartAnimation();
 
   if (!summary) return null;
   if (summary.total === 0) {
@@ -103,7 +84,7 @@ export function MonthCharts({ summary }: Props) {
                       <Cell key={s.status} fill={statusColour[s.status]} />
                     ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: "var(--text)" }} />
+                <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} />
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -144,7 +125,7 @@ export function MonthCharts({ summary }: Props) {
               <Tooltip
                 cursor={{ fill: "var(--primary-soft)" }}
                 contentStyle={tooltipStyle}
-                itemStyle={{ color: "var(--text)" }}
+                itemStyle={tooltipItemStyle}
                 formatter={(value) => [value, "งาน"]}
               />
               <Bar dataKey="count" fill="var(--primary)" radius={[0, 6, 6, 0]} barSize={24} {...animation}>

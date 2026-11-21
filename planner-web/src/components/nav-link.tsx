@@ -45,6 +45,9 @@ export function NavLink({ href, label, ready, layout, children }: Props) {
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
+      // A link inside the phone's More menu closes that popover; client-side
+      // navigation would otherwise leave it open over the new page.
+      onClick={(event) => event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover()}
       className={`${shape} ${active ? "bg-primary-soft font-medium text-primary" : "text-muted hover:text-text"}`}
     >
       {content}
