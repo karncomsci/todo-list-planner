@@ -1,0 +1,4 @@
+/planner-api
+*.exe
+.env
+.claude/settings.local.json
