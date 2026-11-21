@@ -202,3 +202,41 @@ export type Settings = {
 export type SettingsResponse = {
   settings: Settings;
 };
+
+// Reports
+
+/** Tasks completed in one Monday-start week. */
+export type WeekCount = {
+  /** The week's Monday. */
+  weekStart: IsoDate;
+  count: number;
+};
+
+/** The six Reports metrics for a range (D31), all calculated by the API (D32). */
+export type Report = {
+  from: IsoDate;
+  to: IsoDate;
+  /** Tasks due in the range. */
+  total: number;
+  completedPerWeek: WeekCount[];
+  onTime: {
+    onTime: number;
+    late: number;
+    notDone: number;
+    /** 0 to 1; null when no Task due in the range is settled yet. */
+    share: number | null;
+  };
+  byCategory: CategoryCount[];
+  byPriority: Record<Priority, number>;
+  overdue: number;
+  water: {
+    /** null when the whole range is after today. */
+    averageGlasses: number | null;
+    days: number;
+  };
+  allMealsDays: number;
+};
+
+export type ReportResponse = {
+  report: Report;
+};

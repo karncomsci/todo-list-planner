@@ -392,19 +392,9 @@ func (s *server) listTasks(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"tasks": tasks})
 	}
 
-	from, err := parseDate("from", c.Query("from"))
+	from, to, err := parseRange(c)
 	if err != nil {
 		return err
-	}
-	to, err := parseDate("to", c.Query("to"))
-	if err != nil {
-		return err
-	}
-	if to.Before(from) {
-		return validation("to", "out_of_range", "to must not be before from")
-	}
-	if to.Sub(from) > maxRangeDays*24*time.Hour {
-		return validation("to", "out_of_range", fmt.Sprintf("the range must be at most %d days", maxRangeDays))
 	}
 	rows, err := s.queries.ListTasksInRange(c.Context(), database.ListTasksInRangeParams{OwnerID: owner, FromDate: from, ToDate: to})
 	if err != nil {

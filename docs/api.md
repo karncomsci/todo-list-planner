@@ -302,3 +302,40 @@ The Owner's settings (D28).
 `GET /api/settings`: the Owner's settings; `waterGoal` is 8 until changed (A4).
 
 - 200 `{ "settings": Settings }`
+
+### Reports
+
+The six Reports metrics for a period (D31), all calculated here (D32). The web turns the four period choices (this week, this month, this year, custom) into a range.
+
+`GET /api/reports?from=YYYY-MM-DD&to=YYYY-MM-DD`: the report for a CE range, both ends inclusive.
+
+```json
+{
+  "report": {
+    "from": "2026-11-01",
+    "to": "2026-11-30",
+    "total": 7,
+    "completedPerWeek": [{ "weekStart": "2026-10-26", "count": 0 }, { "weekStart": "2026-11-02", "count": 2 }, …],
+    "onTime": { "onTime": 3, "late": 1, "notDone": 1, "share": 0.6 },
+    "byCategory": [{ "category": { "id": 3, "name": "Work" }, "count": 3 }, { "category": null, "count": 2 }],
+    "byPriority": { "high": 2, "medium": 3, "low": 2 },
+    "overdue": 1,
+    "water": { "averageGlasses": 1.0, "days": 21 },
+    "allMealsDays": 2
+  }
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `total` | Tasks whose `dueDate` is in the range: the set `onTime`, `byCategory`, `byPriority` and `overdue` count (A6) |
+| `completedPerWeek` | Every Monday-start week touching the range, in order, zeros included; `count` is the Tasks whose `completedAt`, as a date in Thailand, falls in that week and in the range, whatever their due date (story 49, D22) |
+| `onTime` | Over the settled Tasks due in the range, that is done or due before today: `onTime` done on or before the due date (in Thailand), `late` done after it, `notDone` overdue. `share` is `onTime` over all three, from 0 to 1, or null when none are settled. Tasks still ahead do not count (story 50, D31) |
+| `byCategory` | Tasks due in the range per Category, as in the Overview: largest first, then by name; uncategorised last as `category: null`, only when there are some (story 51) |
+| `byPriority` | Tasks due in the range per Priority; all three always present (story 51) |
+| `overdue` | Tasks due in the range that are overdue now (story 52, D23) |
+| `water` | `days` is the number of the range's days up to today; `averageGlasses` the glasses over those days divided by `days`, a day without a record counting as 0 (D27). When the whole range is after today, `days` is 0 and `averageGlasses` null (story 53) |
+| `allMealsDays` | Days in the range, up to today, with all three meals ticked (story 53) |
+
+- 200 with the body above
+- 422 on `from` or `to`, as for listing Tasks by date range: `required`, `invalid_date`; on `to`: `out_of_range` when it is before `from` or the range is longer than 400 days
