@@ -1,0 +1,7 @@
+.git
+.next
+node_modules
+Dockerfile
+CLAUDE.md
+AGENTS.md
+.env.development
