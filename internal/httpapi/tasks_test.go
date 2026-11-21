@@ -138,7 +138,6 @@ func TestRecentNeedsAValidCount(t *testing.T) {
 	s := newTestServer(t)
 	owner := s.signedInOwner("owner@example.com")
 
-	assertValidation(t, owner.do(http.MethodGet, "/api/tasks", nil), "recent", "required")
 	for _, bad := range []string{"0", "51", "abc", "-1"} {
 		assertValidation(t, owner.do(http.MethodGet, "/api/tasks?recent="+bad, nil), "recent", "out_of_range")
 	}

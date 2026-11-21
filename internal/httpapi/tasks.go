@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"planner-api/internal/database"
@@ -18,6 +20,8 @@ const (
 	maxNameLength = 200
 	maxNoteLength = 2000
 	maxRecent     = 50
+	// Long enough for a year View with the days around it (D6).
+	maxRangeDays = 400
 )
 
 // Task is a Task as the API returns it. Status and IsOverdue are derived on read (D21, D23).
@@ -33,6 +37,7 @@ type Task struct {
 	Status      string     `json:"status"`
 	IsOverdue   bool       `json:"isOverdue"`
 	Note        string     `json:"note"`
+	Category    *Category  `json:"category"`
 	CompletedAt *time.Time `json:"completedAt"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
@@ -56,7 +61,12 @@ func isOverdue(dueDate time.Time, progress int, today string) bool {
 	return progress < 100 && dueDate.Format(dateLayout) < today
 }
 
-func (s *server) toTask(t database.Task, today string) Task {
+// toTask shapes a stored Task; categoryName is the name of its Category, if any.
+func (s *server) toTask(t database.Task, categoryName *string, today string) Task {
+	var category *Category
+	if t.CategoryID != nil && categoryName != nil {
+		category = &Category{ID: *t.CategoryID, Name: *categoryName}
+	}
 	progress := int(t.Progress)
 	return Task{
 		ID:          t.ID,
@@ -70,6 +80,7 @@ func (s *server) toTask(t database.Task, today string) Task {
 		Status:      statusOf(progress),
 		IsOverdue:   isOverdue(t.DueDate, progress, today),
 		Note:        t.Note,
+		Category:    category,
 		CompletedAt: t.CompletedAt,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,
@@ -142,17 +153,18 @@ func parseName(value string) (string, error) {
 	return name, nil
 }
 
-// taskRequest is the body of create (and, from ticket 07, update).
+// taskRequest is the body of create and update.
 // Only name and dueDate are required.
 type taskRequest struct {
-	Name      string  `json:"name"`
-	DueDate   string  `json:"dueDate"`
-	StartDate *string `json:"startDate"`
-	StartTime *string `json:"startTime"`
-	EndTime   *string `json:"endTime"`
-	Priority  *string `json:"priority"`
-	Progress  *int    `json:"progress"`
-	Note      *string `json:"note"`
+	Name       string  `json:"name"`
+	DueDate    string  `json:"dueDate"`
+	StartDate  *string `json:"startDate"`
+	StartTime  *string `json:"startTime"`
+	EndTime    *string `json:"endTime"`
+	Priority   *string `json:"priority"`
+	Progress   *int    `json:"progress"`
+	Note       *string `json:"note"`
+	CategoryID *int64  `json:"categoryId"`
 }
 
 // taskFields are the validated values of a taskRequest.
@@ -238,16 +250,28 @@ func completedAt(progress int, now time.Time) *time.Time {
 	return &now
 }
 
-func (s *server) createTask(c fiber.Ctx) error {
+// readTask reads and validates a create or update body, including that its
+// Category is the Owner's own. categoryName is the chosen Category's name, if any.
+func (s *server) readTask(c fiber.Ctx) (f taskFields, categoryID *int64, categoryName *string, err error) {
 	var req taskRequest
 	if err := c.Bind().JSON(&req); err != nil {
-		return errBadJSON
+		return f, nil, nil, errBadJSON
 	}
-	f, err := req.validate()
+	if f, err = req.validate(); err != nil {
+		return f, nil, nil, err
+	}
+	category, err := s.ownCategory(c, req.CategoryID)
+	if err != nil || category == nil {
+		return f, nil, nil, err
+	}
+	return f, &category.ID, &category.Name, nil
+}
+
+func (s *server) createTask(c fiber.Ctx) error {
+	f, categoryID, categoryName, err := s.readTask(c)
 	if err != nil {
 		return err
 	}
-
 	row, err := s.queries.CreateTask(c.Context(), database.CreateTaskParams{
 		OwnerID:     currentOwnerOf(c).ID,
 		Name:        f.name,
@@ -259,36 +283,135 @@ func (s *server) createTask(c fiber.Ctx) error {
 		Progress:    int16(f.progress),
 		Note:        f.note,
 		CompletedAt: completedAt(f.progress, s.opts.Now()),
+		CategoryID:  categoryID,
 	})
 	if err != nil {
 		return err
 	}
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"task": s.toTask(row, s.today())})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"task": s.toTask(row, categoryName, s.today())})
 }
 
-// listTasks lists the Owner's Tasks. With ?recent=N it returns the N most
-// recently changed Tasks, newest first.
-func (s *server) listTasks(c fiber.Ctx) error {
-	raw := c.Query("recent")
-	if raw == "" {
-		return validation("recent", "required", "recent is required")
-	}
-	n, err := strconv.Atoi(raw)
-	if err != nil || n < 1 || n > maxRecent {
-		return validation("recent", "out_of_range", fmt.Sprintf("recent must be a whole number from 1 to %d", maxRecent))
-	}
+// errTaskNotFound answers for a missing Task and for another Owner's alike (D19).
+var errTaskNotFound = &Error{Status: fiber.StatusNotFound, Code: "not_found", Message: "no such Task"}
 
-	rows, err := s.queries.ListRecentTasks(c.Context(), database.ListRecentTasksParams{
-		OwnerID: currentOwnerOf(c).ID,
-		MaxRows: int32(n),
-	})
+// taskID reads the Task ID from the path. One that cannot exist is simply not found.
+func taskID(c fiber.Ctx) (int64, error) {
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil || id < 1 {
+		return 0, errTaskNotFound
+	}
+	return id, nil
+}
+
+func (s *server) getTask(c fiber.Ctx) error {
+	id, err := taskID(c)
 	if err != nil {
 		return err
 	}
+	row, err := s.queries.GetTask(c.Context(), database.GetTaskParams{ID: id, OwnerID: currentOwnerOf(c).ID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return errTaskNotFound
+	}
+	if err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{"task": s.toTask(row.Task, row.CategoryName, s.today())})
+}
+
+// updateTask replaces every field of a Task, with the same rules as create
+// (story 15). An optional field left out is cleared.
+func (s *server) updateTask(c fiber.Ctx) error {
+	id, err := taskID(c)
+	if err != nil {
+		return err
+	}
+	f, categoryID, categoryName, err := s.readTask(c)
+	if err != nil {
+		return err
+	}
+	row, err := s.queries.UpdateTask(c.Context(), database.UpdateTaskParams{
+		ID:         id,
+		OwnerID:    currentOwnerOf(c).ID,
+		Name:       f.name,
+		DueDate:    f.dueDate,
+		StartDate:  f.startDate,
+		StartTime:  f.startTime,
+		EndTime:    f.endTime,
+		Priority:   f.priority,
+		Progress:   int16(f.progress),
+		Note:       f.note,
+		CategoryID: categoryID,
+		Now:        s.opts.Now(),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return errTaskNotFound
+	}
+	if err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{"task": s.toTask(row, categoryName, s.today())})
+}
+
+// deleteTask removes a Task for good; there is no trash (D25).
+func (s *server) deleteTask(c fiber.Ctx) error {
+	id, err := taskID(c)
+	if err != nil {
+		return err
+	}
+	deleted, err := s.queries.DeleteTask(c.Context(), database.DeleteTaskParams{ID: id, OwnerID: currentOwnerOf(c).ID})
+	if err != nil {
+		return err
+	}
+	if deleted == 0 {
+		return errTaskNotFound
+	}
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// listTasks lists the Owner's Tasks in one of two ways:
+//   - ?from=YYYY-MM-DD&to=YYYY-MM-DD: every Task whose span touches the range,
+//     both ends inclusive, for the Calendar (D14).
+//   - ?recent=N: the N most recently changed Tasks, newest first (story 17).
+func (s *server) listTasks(c fiber.Ctx) error {
+	owner := currentOwnerOf(c).ID
 	today := s.today()
-	tasks := make([]Task, len(rows))
-	for i, row := range rows {
-		tasks[i] = s.toTask(row, today)
+	tasks := []Task{}
+
+	if c.Query("recent") != "" {
+		n, err := strconv.Atoi(c.Query("recent"))
+		if err != nil || n < 1 || n > maxRecent {
+			return validation("recent", "out_of_range", fmt.Sprintf("recent must be a whole number from 1 to %d", maxRecent))
+		}
+		rows, err := s.queries.ListRecentTasks(c.Context(), database.ListRecentTasksParams{OwnerID: owner, MaxRows: int32(n)})
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
+			tasks = append(tasks, s.toTask(row.Task, row.CategoryName, today))
+		}
+		return c.JSON(fiber.Map{"tasks": tasks})
+	}
+
+	from, err := parseDate("from", c.Query("from"))
+	if err != nil {
+		return err
+	}
+	to, err := parseDate("to", c.Query("to"))
+	if err != nil {
+		return err
+	}
+	if to.Before(from) {
+		return validation("to", "out_of_range", "to must not be before from")
+	}
+	if to.Sub(from) > maxRangeDays*24*time.Hour {
+		return validation("to", "out_of_range", fmt.Sprintf("the range must be at most %d days", maxRangeDays))
+	}
+	rows, err := s.queries.ListTasksInRange(c.Context(), database.ListTasksInRangeParams{OwnerID: owner, FromDate: from, ToDate: to})
+	if err != nil {
+		return err
+	}
+	for _, row := range rows {
+		tasks = append(tasks, s.toTask(row.Task, row.CategoryName, today))
 	}
 	return c.JSON(fiber.Map{"tasks": tasks})
 }

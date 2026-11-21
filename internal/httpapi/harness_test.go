@@ -187,7 +187,9 @@ func (c *client) do(method, path string, body any) response {
 	if c.cookie != nil {
 		req.AddCookie(&http.Cookie{Name: c.cookie.Name, Value: c.cookie.Value})
 	}
-	res, err := c.s.app.Test(req)
+	// Fiber's default of one second fails on a busy machine (bcrypt alone can
+	// take that long), which would make results depend on the machine, not the code.
+	res, err := c.s.app.Test(req, fiber.TestConfig{Timeout: 30 * time.Second, FailOnTimeout: true})
 	if err != nil {
 		t.Fatalf("%s %s: %v", method, path, err)
 	}

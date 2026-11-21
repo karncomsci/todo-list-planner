@@ -13,13 +13,13 @@ import (
 )
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at)
+INSERT INTO tasks (owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at, category_id)
 VALUES (
     $1, $2, $3, $4,
     $5, $6, $7, $8,
-    $9, $10
+    $9, $10, $11
 )
-RETURNING id, owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at, created_at, updated_at
+RETURNING id, owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at, created_at, updated_at, category_id
 `
 
 type CreateTaskParams struct {
@@ -33,6 +33,7 @@ type CreateTaskParams struct {
 	Progress    int16
 	Note        string
 	CompletedAt *time.Time
+	CategoryID  *int64
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -47,6 +48,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Progress,
 		arg.Note,
 		arg.CompletedAt,
+		arg.CategoryID,
 	)
 	var i Task
 	err := row.Scan(
@@ -63,14 +65,76 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.CompletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CategoryID,
+	)
+	return i, err
+}
+
+const deleteTask = `-- name: DeleteTask :execrows
+DELETE FROM tasks
+WHERE id = $1 AND owner_id = $2
+`
+
+type DeleteTaskParams struct {
+	ID      int64
+	OwnerID int64
+}
+
+func (q *Queries) DeleteTask(ctx context.Context, arg DeleteTaskParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTask, arg.ID, arg.OwnerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const getTask = `-- name: GetTask :one
+SELECT tasks.id, tasks.owner_id, tasks.name, tasks.due_date, tasks.start_date, tasks.start_time, tasks.end_time, tasks.priority, tasks.progress, tasks.note, tasks.completed_at, tasks.created_at, tasks.updated_at, tasks.category_id, categories.name AS category_name
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.id = $1 AND tasks.owner_id = $2
+`
+
+type GetTaskParams struct {
+	ID      int64
+	OwnerID int64
+}
+
+type GetTaskRow struct {
+	Task         Task
+	CategoryName *string
+}
+
+// Only the Owner's own Task: another Owner's is as if it did not exist (D19).
+func (q *Queries) GetTask(ctx context.Context, arg GetTaskParams) (GetTaskRow, error) {
+	row := q.db.QueryRow(ctx, getTask, arg.ID, arg.OwnerID)
+	var i GetTaskRow
+	err := row.Scan(
+		&i.Task.ID,
+		&i.Task.OwnerID,
+		&i.Task.Name,
+		&i.Task.DueDate,
+		&i.Task.StartDate,
+		&i.Task.StartTime,
+		&i.Task.EndTime,
+		&i.Task.Priority,
+		&i.Task.Progress,
+		&i.Task.Note,
+		&i.Task.CompletedAt,
+		&i.Task.CreatedAt,
+		&i.Task.UpdatedAt,
+		&i.Task.CategoryID,
+		&i.CategoryName,
 	)
 	return i, err
 }
 
 const listRecentTasks = `-- name: ListRecentTasks :many
-SELECT id, owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at, created_at, updated_at FROM tasks
-WHERE owner_id = $1
-ORDER BY updated_at DESC, id DESC
+SELECT tasks.id, tasks.owner_id, tasks.name, tasks.due_date, tasks.start_date, tasks.start_time, tasks.end_time, tasks.priority, tasks.progress, tasks.note, tasks.completed_at, tasks.created_at, tasks.updated_at, tasks.category_id, categories.name AS category_name
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.owner_id = $1
+ORDER BY tasks.updated_at DESC, tasks.id DESC
 LIMIT $2
 `
 
@@ -79,30 +143,37 @@ type ListRecentTasksParams struct {
 	MaxRows int32
 }
 
+type ListRecentTasksRow struct {
+	Task         Task
+	CategoryName *string
+}
+
 // The Owner's most recently changed Tasks, for the list beside the Task form (story 17).
-func (q *Queries) ListRecentTasks(ctx context.Context, arg ListRecentTasksParams) ([]Task, error) {
+func (q *Queries) ListRecentTasks(ctx context.Context, arg ListRecentTasksParams) ([]ListRecentTasksRow, error) {
 	rows, err := q.db.Query(ctx, listRecentTasks, arg.OwnerID, arg.MaxRows)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Task
+	var items []ListRecentTasksRow
 	for rows.Next() {
-		var i Task
+		var i ListRecentTasksRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.OwnerID,
-			&i.Name,
-			&i.DueDate,
-			&i.StartDate,
-			&i.StartTime,
-			&i.EndTime,
-			&i.Priority,
-			&i.Progress,
-			&i.Note,
-			&i.CompletedAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.Task.ID,
+			&i.Task.OwnerID,
+			&i.Task.Name,
+			&i.Task.DueDate,
+			&i.Task.StartDate,
+			&i.Task.StartTime,
+			&i.Task.EndTime,
+			&i.Task.Priority,
+			&i.Task.Progress,
+			&i.Task.Note,
+			&i.Task.CompletedAt,
+			&i.Task.CreatedAt,
+			&i.Task.UpdatedAt,
+			&i.Task.CategoryID,
+			&i.CategoryName,
 		); err != nil {
 			return nil, err
 		}
@@ -112,4 +183,133 @@ func (q *Queries) ListRecentTasks(ctx context.Context, arg ListRecentTasksParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const listTasksInRange = `-- name: ListTasksInRange :many
+SELECT tasks.id, tasks.owner_id, tasks.name, tasks.due_date, tasks.start_date, tasks.start_time, tasks.end_time, tasks.priority, tasks.progress, tasks.note, tasks.completed_at, tasks.created_at, tasks.updated_at, tasks.category_id, categories.name AS category_name
+FROM tasks
+LEFT JOIN categories ON categories.id = tasks.category_id
+WHERE tasks.owner_id = $1
+  AND tasks.due_date >= $2::date
+  AND coalesce(tasks.start_date, tasks.due_date) <= $3::date
+ORDER BY coalesce(tasks.start_date, tasks.due_date), tasks.start_time NULLS FIRST, tasks.id
+`
+
+type ListTasksInRangeParams struct {
+	OwnerID  int64
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+type ListTasksInRangeRow struct {
+	Task         Task
+	CategoryName *string
+}
+
+// Every Task whose span touches the range: from its start date (or due date
+// when it has none) to its due date, both ends inclusive (D14, stories 24, 25).
+func (q *Queries) ListTasksInRange(ctx context.Context, arg ListTasksInRangeParams) ([]ListTasksInRangeRow, error) {
+	rows, err := q.db.Query(ctx, listTasksInRange, arg.OwnerID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTasksInRangeRow
+	for rows.Next() {
+		var i ListTasksInRangeRow
+		if err := rows.Scan(
+			&i.Task.ID,
+			&i.Task.OwnerID,
+			&i.Task.Name,
+			&i.Task.DueDate,
+			&i.Task.StartDate,
+			&i.Task.StartTime,
+			&i.Task.EndTime,
+			&i.Task.Priority,
+			&i.Task.Progress,
+			&i.Task.Note,
+			&i.Task.CompletedAt,
+			&i.Task.CreatedAt,
+			&i.Task.UpdatedAt,
+			&i.Task.CategoryID,
+			&i.CategoryName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateTask = `-- name: UpdateTask :one
+UPDATE tasks SET
+    name         = $1,
+    due_date     = $2,
+    start_date   = $3,
+    start_time   = $4,
+    end_time     = $5,
+    priority     = $6,
+    progress     = $7,
+    note         = $8,
+    category_id  = $9,
+    completed_at = CASE WHEN $7::smallint = 100
+                        THEN coalesce(completed_at, $10::timestamptz) END,
+    updated_at   = now()
+WHERE id = $11 AND owner_id = $12
+RETURNING id, owner_id, name, due_date, start_date, start_time, end_time, priority, progress, note, completed_at, created_at, updated_at, category_id
+`
+
+type UpdateTaskParams struct {
+	Name       string
+	DueDate    time.Time
+	StartDate  *time.Time
+	StartTime  pgtype.Time
+	EndTime    pgtype.Time
+	Priority   string
+	Progress   int16
+	Note       string
+	CategoryID *int64
+	Now        time.Time
+	ID         int64
+	OwnerID    int64
+}
+
+// Replaces every field. completed_at keeps its first value while Progress stays
+// at 100, takes the save time when Progress reaches 100, and clears below (D22).
+func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTask,
+		arg.Name,
+		arg.DueDate,
+		arg.StartDate,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Priority,
+		arg.Progress,
+		arg.Note,
+		arg.CategoryID,
+		arg.Now,
+		arg.ID,
+		arg.OwnerID,
+	)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.DueDate,
+		&i.StartDate,
+		&i.StartTime,
+		&i.EndTime,
+		&i.Priority,
+		&i.Progress,
+		&i.Note,
+		&i.CompletedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CategoryID,
+	)
+	return i, err
 }

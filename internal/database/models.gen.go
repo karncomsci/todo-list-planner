@@ -10,6 +10,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Category struct {
+	ID        int64
+	OwnerID   int64
+	Name      string
+	CreatedAt time.Time
+}
+
 type Owner struct {
 	ID           int64
 	Email        string
@@ -38,4 +45,5 @@ type Task struct {
 	CompletedAt *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	CategoryID  *int64
 }
