@@ -1,0 +1,17 @@
+# Generate with the pinned image (see CLAUDE.md): sqlc cannot parse PostgreSQL in a native Windows build.
+version: "2"
+sql:
+  - engine: postgresql
+    schema: internal/database/migrations
+    queries: internal/database/queries
+    gen:
+      go:
+        package: database
+        out: internal/database
+        sql_package: pgx/v5
+        output_db_file_name: queries.gen.go
+        output_models_file_name: models.gen.go
+        output_files_suffix: .gen
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
