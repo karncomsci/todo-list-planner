@@ -1,4 +1,4 @@
-import type { Priority, TaskStatus } from "@/lib/api/types";
+import type { Priority, Task, TaskRequest, TaskStatus } from "@/lib/api/types";
 
 /** Thai names from the glossary. */
 export const statusLabels: Record<TaskStatus, string> = {
@@ -33,4 +33,23 @@ export function statusPreview(progress: number): TaskStatus {
 /** "09:00–10:30", or "" for a Task without a time. */
 export function timeRange(startTime: string | null, endTime: string | null): string {
   return startTime && endTime ? `${startTime}–${endTime}` : "";
+}
+
+/**
+ * The update body that saves a Task unchanged except for `changes`. Update
+ * replaces every field, so every field is sent.
+ */
+export function taskRequestOf(task: Task, changes: Partial<TaskRequest> = {}): TaskRequest {
+  return {
+    name: task.name,
+    dueDate: task.dueDate,
+    startDate: task.startDate,
+    startTime: task.startTime,
+    endTime: task.endTime,
+    priority: task.priority,
+    progress: task.progress,
+    note: task.note,
+    categoryId: task.category?.id ?? null,
+    ...changes,
+  };
 }

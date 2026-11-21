@@ -98,3 +98,158 @@ html [data-sonner-toast] [data-description] {
 .rdp-root .rdp-dropdown_root {
   font-weight: 600;
 }
+
+/*
+ * Calendar (FullCalendar) in the app's colours, both themes. FullCalendar injects
+ * its own styles after this file, so every rule starts with html to outrank them.
+ */
+html .fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--surface);
+  --fc-neutral-bg-color: var(--bg);
+  --fc-today-bg-color: color-mix(in srgb, var(--primary-soft) 70%, transparent);
+  --fc-more-link-text-color: var(--primary);
+  font-size: 0.875rem;
+}
+
+html .fc .fc-col-header-cell-cushion {
+  padding: 0.5rem 0;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+html .fc .fc-daygrid-day-number {
+  margin: 0.25rem;
+  min-width: 1.75rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.375rem;
+  text-align: center;
+  color: var(--text);
+}
+
+html .fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+/* Today: tinted cell and a filled day number (story 32). */
+html .fc .fc-day-today .fc-daygrid-day-number {
+  background: var(--primary);
+  color: var(--primary-fg);
+  font-weight: 600;
+}
+
+/* Hourly Views: muted hour labels; today's column header in the primary colour (story 32). */
+html .fc .fc-timegrid-axis-cushion,
+html .fc .fc-timegrid-slot-label-cushion {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+html .fc .fc-timegrid .fc-day-today .fc-col-header-cell-cushion {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Task colour: Priority, or red when Overdue (A3, stories 27, 28). */
+html .fc .task-event {
+  --task-colour: var(--priority-medium);
+  --fc-event-border-color: var(--task-colour);
+  --fc-event-bg-color: color-mix(in srgb, var(--task-colour) 18%, var(--surface));
+  --fc-event-text-color: var(--text);
+  border-width: 0 0 0 3px;
+  border-radius: 0.375rem;
+}
+html .fc .task-priority-high { --task-colour: var(--priority-high); }
+html .fc .task-priority-medium { --task-colour: var(--priority-medium); }
+html .fc .task-priority-low { --task-colour: var(--priority-low); }
+html .fc .task-overdue {
+  --task-colour: var(--danger);
+  --fc-event-text-color: var(--danger);
+}
+
+html .fc .task-event .fc-event-main,
+html .fc .task-event.fc-daygrid-dot-event {
+  color: var(--fc-event-text-color);
+  padding: 0.0625rem 0.25rem;
+}
+
+/* A timed one-day Task: a dot, its start time, its name. */
+html .fc .task-event.fc-daygrid-dot-event {
+  border: 0;
+  background: transparent;
+}
+html .fc .task-event.fc-daygrid-dot-event:hover {
+  background: var(--fc-event-bg-color);
+}
+html .fc .task-event .fc-event-time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Done: struck through and faded (story 29). */
+html .fc .task-done .fc-event-title {
+  text-decoration: line-through;
+}
+html .fc .task-done {
+  opacity: 0.6;
+}
+
+/* Inside a Task: tick circle in its colour, time, name (stories 30, 31). */
+html .fc .task-event {
+  cursor: pointer;
+}
+html .fc .task-event-content {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.25rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+html .fc .task-event-content .fc-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html .fc .task-tick {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid var(--task-colour);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--surface);
+}
+html .fc button.task-tick {
+  cursor: pointer;
+}
+html .fc button.task-tick:hover {
+  background: color-mix(in srgb, var(--task-colour) 35%, var(--surface));
+}
+html .fc button.task-tick:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+html .fc .task-tick.task-tick-done {
+  background: var(--task-colour);
+}
+html .fc .task-event.fc-event:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/*
+ * FullCalendar lays a shade (and an invisible layer above the content) over a
+ * focused event. Focus returns to the Task when its form closes, and that layer
+ * would swallow clicks on the tick circle, so it is removed; the outline above
+ * shows focus instead.
+ */
+html .fc .task-event.fc-event:focus::before,
+html .fc .task-event.fc-event:focus::after {
+  display: none;
+}
+html .fc .task-event.fc-event:focus {
+  box-shadow: none;
+}

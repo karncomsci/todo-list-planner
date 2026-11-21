@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { addDays, formatThaiDate, isoToLocalDate, localDateToIso, todayIso } from "./dates";
+import {
+  addDays,
+  addMonths,
+  formatThaiDate,
+  isoToLocalDate,
+  localDateToIso,
+  startOfMonth,
+  todayIso,
+  weekdayFromMonday,
+} from "./dates";
 
 describe("formatThaiDate", () => {
   it("writes Thai dates with BE years", () => {
@@ -45,5 +54,23 @@ describe("addDays", () => {
     expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
     expect(addDays("2024-02-28", 1)).toBe("2024-02-29");
     expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+  });
+});
+
+describe("month arithmetic", () => {
+  it("finds the first day of a month", () => {
+    expect(startOfMonth("2026-11-21")).toBe("2026-11-01");
+  });
+
+  it("moves by whole months across a year end, from any day", () => {
+    expect(addMonths("2026-11-30", 1)).toBe("2026-12-01");
+    expect(addMonths("2026-12-15", 1)).toBe("2027-01-01");
+    expect(addMonths("2027-01-31", -1)).toBe("2026-12-01");
+  });
+
+  it("numbers weekdays from Monday", () => {
+    expect(weekdayFromMonday("2026-11-23")).toBe(0); // Monday
+    expect(weekdayFromMonday("2026-11-21")).toBe(5); // Saturday
+    expect(weekdayFromMonday("2026-11-22")).toBe(6); // Sunday
   });
 });

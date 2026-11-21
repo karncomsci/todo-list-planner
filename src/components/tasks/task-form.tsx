@@ -1,14 +1,25 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
-import { useRef, useState } from "react";
+import { LoaderCircle, Trash2 } from "lucide-react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/date-picker";
 import { api, ApiError } from "@/lib/api/client";
 import { errorText } from "@/lib/api/messages";
-import type { CreateTaskRequest, Priority, Task, TaskResponse } from "@/lib/api/types";
+import type {
+  Priority,
+  Task,
+  TaskRequest,
+  TaskResponse,
+} from "@/lib/api/types";
 import type { IsoDate } from "@/lib/dates";
-import { priorityDotClass, priorityLabels, statusLabels, statusPreview } from "@/lib/tasks";
+import { CategorySelect } from "./category-select";
+import {
+  priorityDotClass,
+  priorityLabels,
+  statusLabels,
+  statusPreview,
+} from "@/lib/tasks";
 
 type Values = {
   name: string;
@@ -19,6 +30,7 @@ type Values = {
   priority: Priority;
   progress: number;
   note: string;
+  categoryId: number | null;
 };
 
 type Field = keyof Values;
@@ -32,24 +44,60 @@ const emptyValues: Values = {
   priority: "medium",
   progress: 0,
   note: "",
+  categoryId: null,
 };
+
+/** The form's values for a saved Task; absent optional fields become empty. */
+function valuesOf(task: Task): Values {
+  return {
+    name: task.name,
+    dueDate: task.dueDate,
+    startDate: task.startDate ?? "",
+    startTime: task.startTime ?? "",
+    endTime: task.endTime ?? "",
+    priority: task.priority,
+    progress: task.progress,
+    note: task.note,
+    categoryId: task.category?.id ?? null,
+  };
+}
 
 const priorities: Priority[] = ["high", "medium", "low"];
 
 const inputClass =
   "mt-1.5 block w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/25 aria-invalid:border-danger";
 
-/** Adds a Task. Only the name and due date are required (stories 7 to 14, 18, 19). */
-export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
+type Props = {
+  /** The saved Task to edit; without it the form adds a new Task. */
+  task?: Task;
+  onSaved: (task: Task) => void;
+  /** Called after the edited Task is deleted. */
+  onDeleted?: (task: Task) => void;
+  /** Shows a cancel button that calls this. */
+  onCancel?: () => void;
+};
+
+/**
+ * Adds a Task, or edits every field of a saved one and deletes it after a
+ * confirmation (stories 7 to 16, 18, 19; D25). Only the name and due date are required.
+ */
+export function TaskForm({ task, onSaved, onDeleted, onCancel }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [values, setValues] = useState<Values>(emptyValues);
+  const [values, setValues] = useState<Values>(() =>
+    task ? valuesOf(task) : emptyValues,
+  );
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [busy, setBusy] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // The add form and an edit dialog can share a page, so element IDs are per form.
+  const idPrefix = `task${useId()}`;
 
   function set<K extends Field>(field: K, value: Values[K]) {
     setValues((current) => ({ ...current, [field]: value }));
     // An edited field drops its error; the next save checks it again.
-    setErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
+    setErrors((current) =>
+      current[field] ? { ...current, [field]: undefined } : current,
+    );
   }
 
   function focusField(field: Field) {
@@ -61,14 +109,31 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
     setErrors({});
     setBusy(true);
     try {
-      const request: CreateTaskRequest = values;
-      const { task } = await api<TaskResponse>("POST", "/tasks", request);
-      toast.success("บันทึกงานแล้ว", { description: task.name });
-      setValues(emptyValues);
-      onSaved(task);
-      focusField("name");
+      const request: TaskRequest = values;
+      if (task) {
+        const { task: saved } = await api<TaskResponse>(
+          "PUT",
+          `/tasks/${task.id}`,
+          request,
+        );
+        toast.success("บันทึกการแก้ไขแล้ว", { description: saved.name });
+        onSaved(saved);
+      } else {
+        const { task: saved } = await api<TaskResponse>(
+          "POST",
+          "/tasks",
+          request,
+        );
+        toast.success("บันทึกงานแล้ว", { description: saved.name });
+        setValues(emptyValues);
+        onSaved(saved);
+        focusField("name");
+      }
     } catch (error) {
-      const field = error instanceof ApiError ? (error.field as Field | undefined) : undefined;
+      const field =
+        error instanceof ApiError
+          ? (error.field as Field | undefined)
+          : undefined;
       if (field && field in emptyValues) {
         setErrors({ [field]: errorText(error) });
         focusField(field);
@@ -80,14 +145,39 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
     }
   }
 
+  async function remove() {
+    if (!task) return;
+    setBusy(true);
+    try {
+      await api<void>("DELETE", `/tasks/${task.id}`);
+      toast.success("ลบงานแล้ว", { description: task.name });
+      onDeleted?.(task);
+    } catch (error) {
+      toast.error("ลบงานไม่สำเร็จ", { description: errorText(error) });
+      setBusy(false);
+    }
+  }
+
   const invalid = (field: Field) => (errors[field] ? true : undefined);
-  const describedBy = (field: Field) => (errors[field] ? `task-${field}-error` : undefined);
+  const describedBy = (field: Field) =>
+    errors[field] ? `${idPrefix}-${field}-error` : undefined;
 
   return (
-    <form ref={formRef} onSubmit={submit} noValidate className="flex flex-col gap-5">
-      <FieldShell id="task-name" label="ชื่องาน" required error={errors.name} errorId={describedBy("name")}>
+    <form
+      ref={formRef}
+      onSubmit={submit}
+      noValidate
+      className="flex flex-col gap-5"
+    >
+      <FieldShell
+        id={`${idPrefix}-name`}
+        label="ชื่องาน"
+        required
+        error={errors.name}
+        errorId={describedBy("name")}
+      >
         <input
-          id="task-name"
+          id={`${idPrefix}-name`}
           name="name"
           value={values.name}
           onChange={(event) => set("name", event.target.value)}
@@ -103,14 +193,14 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <FieldShell
-          id="task-dueDate"
+          id={`${idPrefix}-dueDate`}
           label="วันครบกำหนด"
           required
           error={errors.dueDate}
           errorId={describedBy("dueDate")}
         >
           <DatePicker
-            id="task-dueDate"
+            id={`${idPrefix}-dueDate`}
             name="dueDate"
             value={values.dueDate}
             onChange={(value) => set("dueDate", value)}
@@ -119,14 +209,14 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
           />
         </FieldShell>
         <FieldShell
-          id="task-startDate"
+          id={`${idPrefix}-startDate`}
           label="วันเริ่ม"
           hint="เว้นว่างได้ ถ้ามี งานจะแสดงเป็นช่วงบนปฏิทิน"
           error={errors.startDate}
           errorId={describedBy("startDate")}
         >
           <DatePicker
-            id="task-startDate"
+            id={`${idPrefix}-startDate`}
             name="startDate"
             value={values.startDate}
             onChange={(value) => set("startDate", value)}
@@ -138,9 +228,14 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <FieldShell id="task-startTime" label="เวลาเริ่ม" error={errors.startTime} errorId={describedBy("startTime")}>
+        <FieldShell
+          id={`${idPrefix}-startTime`}
+          label="เวลาเริ่ม"
+          error={errors.startTime}
+          errorId={describedBy("startTime")}
+        >
           <input
-            id="task-startTime"
+            id={`${idPrefix}-startTime`}
             name="startTime"
             type="time"
             value={values.startTime}
@@ -151,14 +246,14 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
           />
         </FieldShell>
         <FieldShell
-          id="task-endTime"
+          id={`${idPrefix}-endTime`}
           label="เวลาสิ้นสุด"
           hint="ใส่ทั้งสองช่อง หรือเว้นว่างทั้งคู่"
           error={errors.endTime}
           errorId={describedBy("endTime")}
         >
           <input
-            id="task-endTime"
+            id={`${idPrefix}-endTime`}
             name="endTime"
             type="time"
             value={values.endTime}
@@ -186,22 +281,49 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
                 onChange={() => set("priority", priority)}
                 className="sr-only"
               />
-              <span className={`size-2.5 rounded-full ${priorityDotClass[priority]}`} aria-hidden />
+              <span
+                className={`size-2.5 rounded-full ${priorityDotClass[priority]}`}
+                aria-hidden
+              />
               {priorityLabels[priority]}
             </label>
           ))}
         </div>
         {errors.priority && (
-          <p id="task-priority-error" className="mt-1.5 text-sm text-danger">
+          <p
+            id={`${idPrefix}-priority-error`}
+            className="mt-1.5 text-sm text-danger"
+          >
             {errors.priority}
           </p>
         )}
       </fieldset>
 
-      <FieldShell id="task-progress" label="ความคืบหน้า" error={errors.progress} errorId={describedBy("progress")}>
+      <FieldShell
+        id={`${idPrefix}-categoryId`}
+        label="หมวดหมู่"
+        error={errors.categoryId}
+        errorId={describedBy("categoryId")}
+      >
+        <CategorySelect
+          id={`${idPrefix}-categoryId`}
+          value={values.categoryId}
+          onChange={(value) => set("categoryId", value)}
+          invalid={invalid("categoryId")}
+          errorId={describedBy("categoryId")}
+          className={inputClass}
+        />
+      </FieldShell>
+
+      <FieldShell
+        id={`${idPrefix}-progress`}
+        label="ความคืบหน้า"
+        error={errors.progress}
+        errorId={describedBy("progress")}
+      >
         <div className="mt-1.5 flex items-center gap-3">
           <input
-            id="task-progress"
+            id={`${idPrefix}-progress`}
             name="progress"
             type="range"
             min={0}
@@ -213,16 +335,23 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
             aria-describedby={describedBy("progress")}
             className="h-2 flex-1 cursor-pointer accent-primary"
           />
-          <span className="w-12 text-right tabular-nums">{values.progress}%</span>
+          <span className="w-12 text-right tabular-nums">
+            {values.progress}%
+          </span>
           <span className="w-20 rounded-full bg-primary-soft px-2 py-0.5 text-center text-xs text-primary">
             {statusLabels[statusPreview(values.progress)]}
           </span>
         </div>
       </FieldShell>
 
-      <FieldShell id="task-note" label="โน้ต" error={errors.note} errorId={describedBy("note")}>
+      <FieldShell
+        id={`${idPrefix}-note`}
+        label="โน้ต"
+        error={errors.note}
+        errorId={describedBy("note")}
+      >
         <textarea
-          id="task-note"
+          id={`${idPrefix}-note`}
           name="note"
           value={values.note}
           onChange={(event) => set("note", event.target.value)}
@@ -235,14 +364,82 @@ export function TaskForm({ onSaved }: { onSaved: (task: Task) => void }) {
         />
       </FieldShell>
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-primary px-5 py-2.5 font-medium text-primary-fg hover:opacity-90 disabled:opacity-60"
-      >
-        {busy && <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
-        บันทึกงาน
-      </button>
+      {confirmingDelete ? (
+        <div
+          role="alertdialog"
+          aria-labelledby={`${idPrefix}-delete-title`}
+          className="rounded-xl border border-danger/40 bg-danger/5 p-4"
+        >
+          <p
+            id={`${idPrefix}-delete-title`}
+            className="font-medium text-danger"
+          >
+            ลบงาน “{task?.name}” ถาวร?
+          </p>
+          <p className="mt-1 text-sm text-muted">ลบแล้วกู้คืนไม่ได้</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void remove()}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
+            >
+              {busy && (
+                <LoaderCircle
+                  className="size-4 animate-spin motion-reduce:animate-none"
+                  aria-hidden
+                />
+              )}
+              ลบถาวร
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={busy}
+              autoFocus
+              className="rounded-xl border border-border px-4 py-2 text-sm hover:bg-primary-soft hover:text-primary"
+            >
+              ไม่ลบ
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={busy}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-medium text-primary-fg hover:opacity-90 disabled:opacity-60"
+          >
+            {busy && (
+              <LoaderCircle
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden
+              />
+            )}
+            {task ? "บันทึกการแก้ไข" : "บันทึกงาน"}
+          </button>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-xl px-4 py-2.5 text-muted hover:bg-primary-soft hover:text-primary"
+            >
+              ยกเลิก
+            </button>
+          )}
+          {task && (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              disabled={busy}
+              className="ml-auto inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-danger hover:bg-danger/10 disabled:opacity-60"
+            >
+              <Trash2 className="size-4" aria-hidden />
+              ลบงาน
+            </button>
+          )}
+        </div>
+      )}
     </form>
   );
 }
@@ -258,7 +455,15 @@ type FieldShellProps = {
 };
 
 /** Label, control, hint and error message of one form field. */
-function FieldShell({ id, label, required, hint, error, errorId, children }: FieldShellProps) {
+function FieldShell({
+  id,
+  label,
+  required,
+  hint,
+  error,
+  errorId,
+  children,
+}: FieldShellProps) {
   return (
     <div>
       <label htmlFor={id} className="text-sm font-medium">

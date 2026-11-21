@@ -18,7 +18,7 @@ export type NavItem = {
 };
 
 const overview: NavItem = { href: "/overview", label: "ภาพรวม", icon: LayoutDashboard, ready: false };
-const calendar: NavItem = { href: "/calendar", label: "ตารางงาน", icon: CalendarDays, ready: false };
+const calendar: NavItem = { href: "/calendar", label: "ตารางงาน", icon: CalendarDays, ready: true };
 const taskEntry: NavItem = { href: "/tasks", label: "บันทึกงาน", icon: PlusCircle, ready: true };
 const lifeSchedule: NavItem = { href: "/life", label: "ตารางชีวิต", icon: Clock, ready: false };
 const reports: NavItem = { href: "/reports", label: "รายงาน", icon: ChartColumn, ready: false };

@@ -35,6 +35,27 @@ export type SessionResponse = {
   owner: Owner;
 };
 
+// Category
+
+/** Groups Tasks; names are unique per Owner (D24). */
+export type Category = {
+  id: number;
+  name: string;
+};
+
+export type CreateCategoryRequest = {
+  name: string;
+};
+
+export type CategoryResponse = {
+  category: Category;
+};
+
+export type CategoryListResponse = {
+  /** Sorted by name, ignoring letter case. */
+  categories: Category[];
+};
+
 // Task
 
 export type Priority = "high" | "medium" | "low";
@@ -58,13 +79,19 @@ export type Task = {
   /** Computed by the API in Thailand time (D23). */
   isOverdue: boolean;
   note: string;
+  /** null when the Task has no Category. */
+  category: Category | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-/** Only name and dueDate are required. "" or null means none for the optional fields. */
-export type CreateTaskRequest = {
+/**
+ * The body of create and update. Only name and dueDate are required; "", null or
+ * absent means none for the optional fields. Update replaces every field, so it
+ * sends them all.
+ */
+export type TaskRequest = {
   name: string;
   dueDate: IsoDate | "";
   startDate?: IsoDate | "" | null;
@@ -76,6 +103,8 @@ export type CreateTaskRequest = {
   /** 0 to 100, defaults to 0. */
   progress?: number;
   note?: string;
+  /** One of the Owner's Categories, or null for none. */
+  categoryId?: number | null;
 };
 
 export type TaskResponse = {

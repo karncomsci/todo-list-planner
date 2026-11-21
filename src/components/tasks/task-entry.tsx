@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
 import type { Task, TaskListResponse } from "@/lib/api/types";
 import { RecentTasks } from "./recent-tasks";
+import { TaskEditDialog } from "./task-edit-dialog";
 import { TaskForm } from "./task-form";
 
 const RECENT_COUNT = 10;
@@ -12,6 +13,7 @@ const RECENT_COUNT = 10;
 export function TaskEntry() {
   const [recent, setRecent] = useState<Task[]>();
   const [failed, setFailed] = useState(false);
+  const [editing, setEditing] = useState<Task | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -35,6 +37,11 @@ export function TaskEntry() {
     void load();
   }
 
+  function deleted(task: Task) {
+    setRecent((current) => current?.filter((t) => t.id !== task.id));
+    void load();
+  }
+
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
       <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
@@ -43,8 +50,9 @@ export function TaskEntry() {
       </section>
       <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold">งานล่าสุด</h2>
-        <RecentTasks tasks={recent} failed={failed} />
+        <RecentTasks tasks={recent} failed={failed} onOpen={setEditing} />
       </section>
+      <TaskEditDialog task={editing} onClose={() => setEditing(null)} onSaved={saved} onDeleted={deleted} />
     </div>
   );
 }
