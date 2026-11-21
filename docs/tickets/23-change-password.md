@@ -6,12 +6,12 @@
 
 **Blocked by:** 22 (Reports page and stage 5 wrap-up)
 
-**Status:** not started
+**Status:** done
 
-- [ ] `PUT /api/password` with `currentPassword` and `newPassword`: 204 on success; `currentPassword` `required` or `incorrect`; `newPassword` `required`, `too_short` (under 8 characters, as for the initial password), `too_long` (over 72 bytes, the hashing limit)
-- [ ] After a change the new password signs in and the old one does not; every other session of the Owner is ended and the current one stays (D17)
-- [ ] API tests for success, wrong current password, too short, other sessions ended, current session kept (T1, T2)
-- [ ] `docs/api.md` and the web API types file are updated in this ticket
-- [ ] `/settings` shows a "เปลี่ยนรหัสผ่าน" card: current, new, and confirm new (checked in the browser), with Thai errors per field and a toast on success
-- [ ] Cards stack in one column on phones (D10); the Settings menu entry is enabled
-- [ ] API tests and web checks pass
+- [x] `PUT /api/password` with `currentPassword` and `newPassword`: 204 on success; `currentPassword` `required` or `incorrect`; `newPassword` `required`, `too_short` (under 8 characters, as for the initial password), `too_long` (over 72 bytes, the hashing limit)
+- [x] After a change the new password signs in and the old one does not; every other session of the Owner is ended and the current one stays (D17)
+- [x] API tests for success, wrong current password, too short, other sessions ended, current session kept (T1, T2)
+- [x] `docs/api.md` and the web API types file are updated in this ticket
+- [x] `/settings` shows a "เปลี่ยนรหัสผ่าน" card: current, new, and confirm new (checked in the browser), with Thai errors per field and a toast on success
+- [x] Cards stack in one column on phones (D10); the Settings menu entry is enabled
+- [x] API tests and web checks pass

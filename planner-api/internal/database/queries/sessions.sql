@@ -13,3 +13,8 @@ DELETE FROM sessions WHERE token_hash = $1;
 
 -- name: DeleteExpiredSessions :exec
 DELETE FROM sessions WHERE expires_at <= now();
+
+-- name: DeleteOtherSessions :exec
+-- Ends every session of the Owner except the one making the request (D17).
+DELETE FROM sessions
+WHERE owner_id = sqlc.arg(owner_id) AND token_hash <> sqlc.arg(keep_token_hash);

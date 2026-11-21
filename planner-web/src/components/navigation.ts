@@ -22,7 +22,7 @@ const calendar: NavItem = { href: "/calendar", label: "ตารางงาน"
 const taskEntry: NavItem = { href: "/tasks", label: "บันทึกงาน", icon: PlusCircle, ready: true };
 const lifeSchedule: NavItem = { href: "/life", label: "ตารางชีวิต", icon: Clock, ready: true };
 const reports: NavItem = { href: "/reports", label: "รายงาน", icon: ChartColumn, ready: true };
-const settings: NavItem = { href: "/settings", label: "ตั้งค่า", icon: Settings, ready: false };
+const settings: NavItem = { href: "/settings", label: "ตั้งค่า", icon: Settings, ready: true };
 
 /** Left menu on computers: all six pages (D10). */
 export const sideNav = [overview, calendar, taskEntry, lifeSchedule, reports, settings];

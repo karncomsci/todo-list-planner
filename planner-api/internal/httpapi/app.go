@@ -64,6 +64,7 @@ func New(pool *pgxpool.Pool, opts Options) *fiber.App {
 	// unknown path: a signed-out request learns nothing about which routes exist.
 	owned := api.Group("", s.requireOwner)
 	owned.Get("/session", s.currentOwner)
+	owned.Put("/password", s.changePassword)
 	owned.Get("/tasks", s.listTasks)
 	owned.Post("/tasks", s.createTask)
 	owned.Get("/tasks/:id", s.getTask)

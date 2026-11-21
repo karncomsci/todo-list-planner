@@ -339,3 +339,19 @@ The six Reports metrics for a period (D31), all calculated here (D32). The web t
 
 - 200 with the body above
 - 422 on `from` or `to`, as for listing Tasks by date range: `required`, `invalid_date`; on `to`: `out_of_range` when it is before `from` or the range is longer than 400 days
+
+### Password
+
+`PUT /api/password`: change the Owner's password after confirming the current one (story 54). The new password is stored as a one-way hash (D18).
+
+```json
+{ "currentPassword": "correct-horse", "newPassword": "battery-staple" }
+```
+
+- 204, no body. Every other session of the Owner ends at once; the session that made the change stays signed in (D17).
+- 422, on the first field that breaks a rule:
+
+| Field | Codes |
+|---|---|
+| `currentPassword` | `required`; `incorrect` when it is not the current password |
+| `newPassword` | `required`; `too_short` (under 8 characters, as for the initial password); `too_long` (over 72 bytes, the most the hash reads) |

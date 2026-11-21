@@ -19,6 +19,9 @@ const fieldLabels: Record<string, string> = {
   lunchMenu: "เมนูมื้อกลางวัน",
   dinnerMenu: "เมนูมื้อเย็น",
   date: "วันที่",
+  currentPassword: "รหัสผ่านปัจจุบัน",
+  newPassword: "รหัสผ่านใหม่",
+  waterGoal: "เป้าดื่มน้ำ",
 };
 
 /** Thai text per error code. Validation codes take the field's Thai name. */
@@ -32,6 +35,9 @@ const messages: Record<string, (label: string) => string> = {
   start_after_due: () => "วันเริ่มต้องไม่อยู่หลังวันครบกำหนด",
   end_before_start: () => "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม",
   duplicate: (label) => `มี${label}นี้อยู่แล้ว`,
+  incorrect: (label) => `${label}ไม่ถูกต้อง`,
+  too_short: (label) => `${label}ต้องมีอย่างน้อย 8 ตัวอักษร`,
+  invalid_backup: () => "ไฟล์สำรองข้อมูลไม่ถูกต้อง ข้อมูลเดิมไม่ถูกเปลี่ยน",
   invalid_credentials: () => "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
   too_many_attempts: () => "เข้าสู่ระบบผิดหลายครั้งเกินไป กรุณารอ 1 นาทีแล้วลองใหม่",
   unauthorized: () => "กรุณาเข้าสู่ระบบก่อน",

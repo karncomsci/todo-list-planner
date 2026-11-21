@@ -240,3 +240,11 @@ export type Report = {
 export type ReportResponse = {
   report: Report;
 };
+
+// Password
+
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  /** At least 8 characters, at most 72 bytes. */
+  newPassword: string;
+};

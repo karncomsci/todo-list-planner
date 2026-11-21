@@ -60,3 +60,30 @@ func (q *Queries) GetOwnerByEmail(ctx context.Context, email string) (GetOwnerBy
 	err := row.Scan(&i.ID, &i.Email, &i.PasswordHash)
 	return i, err
 }
+
+const getOwnerPasswordHash = `-- name: GetOwnerPasswordHash :one
+SELECT password_hash FROM owners
+WHERE id = $1
+`
+
+func (q *Queries) GetOwnerPasswordHash(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRow(ctx, getOwnerPasswordHash, id)
+	var password_hash string
+	err := row.Scan(&password_hash)
+	return password_hash, err
+}
+
+const setOwnerPassword = `-- name: SetOwnerPassword :exec
+UPDATE owners SET password_hash = $1
+WHERE id = $2
+`
+
+type SetOwnerPasswordParams struct {
+	PasswordHash string
+	ID           int64
+}
+
+func (q *Queries) SetOwnerPassword(ctx context.Context, arg SetOwnerPasswordParams) error {
+	_, err := q.db.Exec(ctx, setOwnerPassword, arg.PasswordHash, arg.ID)
+	return err
+}
