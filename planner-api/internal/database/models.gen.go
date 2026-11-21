@@ -17,11 +17,30 @@ type Category struct {
 	CreatedAt time.Time
 }
 
+type DailyChecklist struct {
+	OwnerID       int64
+	Day           time.Time
+	Glasses       int16
+	BreakfastMenu string
+	BreakfastDone bool
+	LunchMenu     string
+	LunchDone     bool
+	DinnerMenu    string
+	DinnerDone    bool
+	Note          string
+	UpdatedAt     time.Time
+}
+
 type Owner struct {
 	ID           int64
 	Email        string
 	PasswordHash string
 	CreatedAt    time.Time
+}
+
+type OwnerSetting struct {
+	OwnerID   int64
+	WaterGoal int16
 }
 
 type RoutineEntry struct {

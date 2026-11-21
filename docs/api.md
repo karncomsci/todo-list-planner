@@ -255,3 +255,50 @@ Every answer carries all nineteen hours, 5 to 23 in order; `text` is `""` for an
 `DELETE /api/routine`: clear every hour in one step (story 42).
 
 - 204, no body
+
+### Daily Checklist
+
+One checklist per Owner per day (D27): glasses of water drunk, three meals each with a menu and a tick, and one Reminder Note. A day with no record is an empty checklist; past days are kept for Reports (stories 46, 47). It never appears on the Calendar (D29).
+
+```json
+{
+  "date": "2026-11-22",
+  "glasses": 5,
+  "breakfastMenu": "Rice soup",
+  "breakfastDone": true,
+  "lunchMenu": "",
+  "lunchDone": false,
+  "dinnerMenu": "",
+  "dinnerDone": false,
+  "note": "Drink more water"
+}
+```
+
+`GET /api/checklists/{date}`: the checklist for a CE date.
+
+- 200 `{ "checklist": Checklist }`; zeros, `""` and `false` when the day has no record
+- 422 on `date`: `invalid_date`
+
+`PUT /api/checklists/{date}`: create or replace the whole checklist for that date. The body is a Checklist without `date`; a field left out takes its empty value. Texts are stored trimmed.
+
+- 200 `{ "checklist": Checklist }`
+- 422, on the first field that breaks a rule:
+
+| Field | Codes |
+|---|---|
+| `date` | `invalid_date` |
+| `glasses` | `out_of_range` (0 to 30) |
+| `breakfastMenu`, `lunchMenu`, `dinnerMenu` | `too_long` (over 100 characters) |
+| `note` | `too_long` (over 1000 characters) |
+
+### Settings
+
+The Owner's settings (D28).
+
+```json
+{ "waterGoal": 8 }
+```
+
+`GET /api/settings`: the Owner's settings; `waterGoal` is 8 until changed (A4).
+
+- 200 `{ "settings": Settings }`

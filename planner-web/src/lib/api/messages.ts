@@ -14,6 +14,11 @@ const fieldLabels: Record<string, string> = {
   note: "โน้ต",
   categoryId: "หมวดหมู่",
   entries: "กิจวัตร",
+  glasses: "จำนวนแก้วน้ำ",
+  breakfastMenu: "เมนูมื้อเช้า",
+  lunchMenu: "เมนูมื้อกลางวัน",
+  dinnerMenu: "เมนูมื้อเย็น",
+  date: "วันที่",
 };
 
 /** Thai text per error code. Validation codes take the field's Thai name. */

@@ -168,3 +168,37 @@ export type RoutineResponse = {
 export type RoutineRequest = {
   entries: RoutineEntry[];
 };
+
+// Daily Checklist
+
+/** One day's Daily Checklist (D27). A day with no record comes back empty. */
+export type Checklist = {
+  date: IsoDate;
+  /** 0 to 30 */
+  glasses: number;
+  breakfastMenu: string;
+  breakfastDone: boolean;
+  lunchMenu: string;
+  lunchDone: boolean;
+  dinnerMenu: string;
+  dinnerDone: boolean;
+  /** The Reminder Note. */
+  note: string;
+};
+
+export type ChecklistRequest = Omit<Checklist, "date">;
+
+export type ChecklistResponse = {
+  checklist: Checklist;
+};
+
+// Settings
+
+export type Settings = {
+  /** Glasses per day, 1 to 30; 8 until changed (D28, A4). */
+  waterGoal: number;
+};
+
+export type SettingsResponse = {
+  settings: Settings;
+};

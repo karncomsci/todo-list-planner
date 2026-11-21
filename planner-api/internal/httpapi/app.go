@@ -75,6 +75,9 @@ func New(pool *pgxpool.Pool, opts Options) *fiber.App {
 	owned.Get("/routine", s.getRoutine)
 	owned.Put("/routine", s.saveRoutine)
 	owned.Delete("/routine", s.clearRoutine)
+	owned.Get("/checklists/:date", s.getChecklist)
+	owned.Put("/checklists/:date", s.saveChecklist)
+	owned.Get("/settings", s.getSettings)
 
 	return app
 }

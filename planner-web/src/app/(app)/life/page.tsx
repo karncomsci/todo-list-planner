@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChecklistView } from "@/components/life/checklist-view";
 import { RoutineEditor } from "@/components/life/routine-editor";
 
 export const metadata: Metadata = { title: "ตารางชีวิต · ปฏิทินตารางงาน" };
@@ -9,6 +10,7 @@ export default function LifeSchedulePage() {
     <>
       <h1 className="mb-6 text-2xl font-semibold">ตารางชีวิต</h1>
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <ChecklistView />
         <RoutineEditor />
       </div>
     </>
