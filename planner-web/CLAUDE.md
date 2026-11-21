@@ -14,7 +14,7 @@ Next.js 16 App Router with Cache Components on, TypeScript, Tailwind CSS 4, luci
 - `src/lib/api/messages.ts`: Thai text for every error code, and Thai names of request fields. Add each new code and field here.
 - `src/lib/dates.ts`: every BE/CE conversion and Thai date format (D9). `src/components/date-picker.tsx` is the one date field, a calendar the Owner picks from (react-day-picker); use it for every date. `src/lib/tasks.ts`: Thai labels and colours for Status and Priority. `src/lib/calendar.ts`: pure Calendar logic (Tasks to FullCalendar events; the phone grid, day lists and dots). `src/components/calendar/` renders it in the browser only: FullCalendar from 48rem up (`computer-calendar.tsx`, one component for every View, with the View switcher), the compact phone calendar below, the same width at which the menus swap. Calendar colours live in `globals.css` as `task-*` classes.
 - `src/components/overview/`: the Overview page (D30); every list and number on it comes from `GET /api/overview`. `src/components/tasks/task-row.tsx` is the one Task row with its tick circle, shared by the phone Calendar's day list and the Overview.
-- `src/components/life/`: the Life Schedule (Routine editor, Daily Checklist). `src/components/ui.ts` holds the shared class lists for cards, fields and buttons; use them on new pages.
+- `src/components/life/`: the Life Schedule (Routine editor, Daily Checklist). `src/components/reports/`: Reports, with periods from `src/lib/reports.ts`. `src/components/settings/`: the Settings cards. `src/components/charts.ts`: tooltip style, label shortening and animation settings shared by every Recharts chart. `src/components/ui.ts` holds the shared class lists for cards, fields and buttons; use them on new pages.
 - `src/app/(app)/`: pages inside the app shell (left menu on computers, bottom menu on phones). Pages without the shell, such as sign-in, sit outside this group.
 - `src/components/navigation.ts`: the menu. Set a page's `ready` to true in the ticket that builds it.
 - `src/lib/api/types.ts`: every API type, by hand (D11). `src/lib/api/client.ts`: the only place that calls `fetch`.
@@ -40,4 +40,4 @@ Next.js 16 App Router with Cache Components on, TypeScript, Tailwind CSS 4, luci
 
 ## Tests (T3)
 
-Unit tests (Vitest, `src/**/*.test.ts`) cover pure logic only: the API client, BE conversion and formatting, and turning Tasks into calendar events. No automated screen tests in this release.
+Unit tests (Vitest, `src/**/*.test.ts`) cover pure logic only: the API client, BE conversion and formatting, turning Tasks into calendar events, Report periods and the glass-press rule. No automated screen tests in this release.

@@ -47,7 +47,12 @@ func readCategoryName(c fiber.Ctx) (string, error) {
 	if err := c.Bind().JSON(&req); err != nil {
 		return "", errBadJSON
 	}
-	name := strings.TrimSpace(req.Name)
+	return cleanCategoryName(req.Name)
+}
+
+// cleanCategoryName trims a Category name and checks it is present and not too long.
+func cleanCategoryName(value string) (string, error) {
+	name := strings.TrimSpace(value)
 	if name == "" {
 		return "", validation("name", "required", "name is required")
 	}

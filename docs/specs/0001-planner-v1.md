@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | Approved. Stages 1 to 3 built (tickets 01 to 18 in `docs/tickets/`). Next step: the Owner hand-tests stage 3, then stage 4 (Life Schedule) is broken into tickets |
-| Document version | 13 |
+| Status | Approved. Stages 1 to 6 built: the first release is complete (tickets 01 to 26 in `docs/tickets/`). Next step: the Owner hand-tests stages 3 to 6 with the checklists in `docs/` |
+| Document version | 14 |
 | Date | 21 Nov 2026 |
 | Source | Synthesised from a 36-question design interview (Q1 to Q36) and the mockups |
 | Vocabulary | Follows GLOSSARY.md in the parent folder (see the term table below) |
@@ -288,7 +288,7 @@ These were decided by the spec author to make the spec complete. Unconfirmed one
 
 ### Open items
 
-- Stage 1 is broken into tickets 01 to 11, stage 2 into tickets 12 to 14 and stage 3 into tickets 15 to 18 in `docs/tickets/`, one Markdown file each, with blocking edges. Stages 1 to 3 are built. Stages 4 to 6 are broken into tickets 19 to 26
+- Stage 1 is broken into tickets 01 to 11, stage 2 into tickets 12 to 14 and stage 3 into tickets 15 to 18 in `docs/tickets/`, one Markdown file each, with blocking edges. Stages 1 to 6 are built; stage 7 (LINE notifications) needs its own spec
 - The dark theme has a mockup for one page only (Calendar month View); other pages follow the same colour set
 - This spec has not been published to an issue tracker because the project has none configured; tickets live as local files instead
 
@@ -315,3 +315,4 @@ These were decided by the spec author to make the spec complete. Unconfirmed one
 | 11 | 21 Nov 2026 | Stage 3 built (tickets 15 to 18); hand-test checklist in `docs/stage-3-checklist.md` |
 | 12 | 21 Nov 2026 | Owner chose one git repository for the whole project: D1 retired and replaced by D37; ADR 0002 written. The two former repositories' histories are kept in the new one |
 | 13 | 22 Nov 2026 | Owner asked for stages 4 to 6 to be built without stopping for approval. Broken into tickets 19 to 26; D31 now says how the on-time share and the water average treat days and Tasks still ahead |
+| 14 | 22 Nov 2026 | Stages 4 to 6 built (tickets 19 to 26); hand-test checklists in `docs/stage-4-checklist.md` to `docs/stage-6-checklist.md`. Built without a decision change; choices the spec left open are recorded in the tickets and `docs/api.md` (password change ends other sessions; backup file format; Water Goal 1 to 30 glasses) |

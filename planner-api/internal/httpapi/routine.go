@@ -56,20 +56,9 @@ func (s *server) saveRoutine(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&req); err != nil {
 		return errBadJSON
 	}
-	seen := map[int]bool{}
-	keep := []RoutineEntry{}
-	for _, entry := range req.Entries {
-		if entry.Hour < firstRoutineHour || entry.Hour > lastRoutineHour || seen[entry.Hour] {
-			return validation("entries", "out_of_range", fmt.Sprintf("each hour must be %d to %d and given once", firstRoutineHour, lastRoutineHour))
-		}
-		seen[entry.Hour] = true
-		text := strings.TrimSpace(entry.Text)
-		if utf8.RuneCountInString(text) > maxRoutineEntryLength {
-			return validation("entries", "too_long", fmt.Sprintf("each entry must be at most %d characters", maxRoutineEntryLength))
-		}
-		if text != "" {
-			keep = append(keep, RoutineEntry{Hour: entry.Hour, Text: text})
-		}
+	keep, err := cleanRoutine(req.Entries)
+	if err != nil {
+		return err
 	}
 
 	owner := currentOwnerOf(c).ID
@@ -87,6 +76,26 @@ func (s *server) saveRoutine(c fiber.Ctx) error {
 		return err
 	}
 	return s.getRoutine(c)
+}
+
+// cleanRoutine checks a whole template and returns its non-empty hours, trimmed.
+func cleanRoutine(entries []RoutineEntry) ([]RoutineEntry, error) {
+	seen := map[int]bool{}
+	keep := []RoutineEntry{}
+	for _, entry := range entries {
+		if entry.Hour < firstRoutineHour || entry.Hour > lastRoutineHour || seen[entry.Hour] {
+			return nil, validation("entries", "out_of_range", fmt.Sprintf("each hour must be %d to %d and given once", firstRoutineHour, lastRoutineHour))
+		}
+		seen[entry.Hour] = true
+		text := strings.TrimSpace(entry.Text)
+		if utf8.RuneCountInString(text) > maxRoutineEntryLength {
+			return nil, validation("entries", "too_long", fmt.Sprintf("each entry must be at most %d characters", maxRoutineEntryLength))
+		}
+		if text != "" {
+			keep = append(keep, RoutineEntry{Hour: entry.Hour, Text: text})
+		}
+	}
+	return keep, nil
 }
 
 // clearRoutine empties every hour in one step (story 42).

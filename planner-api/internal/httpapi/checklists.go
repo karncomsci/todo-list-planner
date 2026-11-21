@@ -78,7 +78,19 @@ func (s *server) saveChecklist(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&req); err != nil {
 		return errBadJSON
 	}
-	if req.Glasses < 0 || req.Glasses > maxGlasses {
+	if err := req.clean(); err != nil {
+		return err
+	}
+	row, err := s.queries.SaveDailyChecklist(c.Context(), req.saveParams(currentOwnerOf(c).ID, day))
+	if err != nil {
+		return err
+	}
+	return c.JSON(fiber.Map{"checklist": toChecklist(row)})
+}
+
+// clean trims the texts and checks every field rule (D27), naming the first that fails.
+func (ch *Checklist) clean() error {
+	if ch.Glasses < 0 || ch.Glasses > maxGlasses {
 		return validation("glasses", "out_of_range", fmt.Sprintf("glasses must be 0 to %d", maxGlasses))
 	}
 	texts := []struct {
@@ -86,10 +98,10 @@ func (s *server) saveChecklist(c fiber.Ctx) error {
 		value *string
 		max   int
 	}{
-		{"breakfastMenu", &req.BreakfastMenu, maxMealMenuLength},
-		{"lunchMenu", &req.LunchMenu, maxMealMenuLength},
-		{"dinnerMenu", &req.DinnerMenu, maxMealMenuLength},
-		{"note", &req.Note, maxReminderLength},
+		{"breakfastMenu", &ch.BreakfastMenu, maxMealMenuLength},
+		{"lunchMenu", &ch.LunchMenu, maxMealMenuLength},
+		{"dinnerMenu", &ch.DinnerMenu, maxMealMenuLength},
+		{"note", &ch.Note, maxReminderLength},
 	}
 	for _, t := range texts {
 		*t.value = strings.TrimSpace(*t.value)
@@ -97,23 +109,22 @@ func (s *server) saveChecklist(c fiber.Ctx) error {
 			return validation(t.field, "too_long", fmt.Sprintf("%s must be at most %d characters", t.field, t.max))
 		}
 	}
+	return nil
+}
 
-	row, err := s.queries.SaveDailyChecklist(c.Context(), database.SaveDailyChecklistParams{
-		OwnerID:       currentOwnerOf(c).ID,
+func (ch Checklist) saveParams(owner int64, day time.Time) database.SaveDailyChecklistParams {
+	return database.SaveDailyChecklistParams{
+		OwnerID:       owner,
 		Day:           day,
-		Glasses:       int16(req.Glasses),
-		BreakfastMenu: req.BreakfastMenu,
-		BreakfastDone: req.BreakfastDone,
-		LunchMenu:     req.LunchMenu,
-		LunchDone:     req.LunchDone,
-		DinnerMenu:    req.DinnerMenu,
-		DinnerDone:    req.DinnerDone,
-		Note:          req.Note,
-	})
-	if err != nil {
-		return err
+		Glasses:       int16(ch.Glasses),
+		BreakfastMenu: ch.BreakfastMenu,
+		BreakfastDone: ch.BreakfastDone,
+		LunchMenu:     ch.LunchMenu,
+		LunchDone:     ch.LunchDone,
+		DinnerMenu:    ch.DinnerMenu,
+		DinnerDone:    ch.DinnerDone,
+		Note:          ch.Note,
 	}
-	return c.JSON(fiber.Map{"checklist": toChecklist(row)})
 }
 
 // Settings are the Owner's settings (D28).

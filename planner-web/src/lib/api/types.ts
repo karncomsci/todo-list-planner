@@ -254,3 +254,28 @@ export type ChangePasswordRequest = {
   /** At least 8 characters, at most 72 bytes. */
   newPassword: string;
 };
+
+// Backup
+
+/** A backup file, as export answers it and import takes it (D33). */
+export type Backup = {
+  format: "planner-backup";
+  version: 1;
+  exportedAt: string;
+  categories: Category[];
+  tasks: (TaskRequest & { completedAt: string | null; createdAt: string; updatedAt: string })[];
+  /** Only the hours with text. */
+  routine: RoutineEntry[];
+  checklists: Checklist[];
+  settings: Settings;
+};
+
+/** What an import replaced the Owner's data with (D34). */
+export type ImportBackupResponse = {
+  imported: {
+    categories: number;
+    tasks: number;
+    routine: number;
+    checklists: number;
+  };
+};

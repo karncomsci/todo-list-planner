@@ -371,3 +371,35 @@ The six Reports metrics for a period (D31), all calculated here (D32). The web t
 |---|---|
 | `currentPassword` | `required`; `incorrect` when it is not the current password |
 | `newPassword` | `required`; `too_short` (under 8 characters, as for the initial password); `too_long` (over 72 bytes, the most the hash reads) |
+
+### Backup
+
+All of one Owner's data as one JSON file (D33): Categories, Tasks, the Routine, every Daily Checklist and Settings, with a format name and version. It holds no password, no email and no sessions. IDs only link Tasks to their Categories inside the file.
+
+```json
+{
+  "format": "planner-backup",
+  "version": 1,
+  "exportedAt": "2026-11-22T03:00:00Z",
+  "categories": [{ "id": 3, "name": "Work" }],
+  "tasks": [{
+    "name": "Meeting", "dueDate": "2026-11-27", "startDate": "2026-11-25", "startTime": "09:00", "endTime": "10:30",
+    "priority": "high", "progress": 40, "note": "", "categoryId": 3,
+    "completedAt": null, "createdAt": "2026-11-21T05:00:00Z", "updatedAt": "2026-11-21T05:00:00Z"
+  }],
+  "routine": [{ "hour": 6, "text": "Run" }],
+  "checklists": [{ "date": "2026-11-20", "glasses": 7, "breakfastMenu": "", "breakfastDone": true, "lunchMenu": "", "lunchDone": false, "dinnerMenu": "", "dinnerDone": false, "note": "" }],
+  "settings": { "waterGoal": 8 }
+}
+```
+
+A backup Task carries the fields of a Task request plus `completedAt`, `createdAt` and `updatedAt`. `routine` lists only hours with text.
+
+`GET /api/backup`: export (story 58).
+
+- 200 with the body above and `Content-Disposition: attachment; filename="planner-backup-YYYY-MM-DD.json"` (the date in Thailand)
+
+`POST /api/backup`: import a backup, replacing all of the Owner's Categories, Tasks, Routine, Daily Checklists and Settings; nothing is merged (D34, story 59). It happens in one transaction: everything is replaced or nothing is. Categories get new IDs and Tasks keep their Categories through the file's IDs. A request may be up to 32 MB.
+
+- 200 `{ "imported": { "categories": 2, "tasks": 14, "routine": 5, "checklists": 30 } }`
+- 422 `invalid_backup`, with the place in the file named in `message`, when the body is not a backup of this format and version, or any item breaks the rules of its endpoint above (a Task field, a Category name, a Routine hour, a checklist field, the Water Goal), or a Task's `categoryId` is not a Category in the file, or `completedAt` is set when `progress` is not 100 or missing when it is, or a Category name or checklist date appears twice. Existing data is unchanged.

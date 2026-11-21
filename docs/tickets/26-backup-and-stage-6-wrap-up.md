@@ -6,14 +6,14 @@
 
 **Blocked by:** 25 (Water Goal setting)
 
-**Status:** not started
+**Status:** done
 
-- [ ] `GET /api/backup` answers the backup as a JSON download (`Content-Disposition: attachment`): `format` "planner-backup", `version` 1, `exportedAt`, and the Owner's Categories, Tasks, Routine, every Daily Checklist and Settings; no password and no sessions (D33)
-- [ ] `POST /api/backup` with a backup body replaces all of the Owner's Tasks, Categories, Routine, Daily Checklists and Settings in one transaction; IDs are assigned anew and Tasks keep their Categories through the backup's IDs; answers the counts imported
-- [ ] A file in the wrong format (wrong `format` or `version`, a broken field, a Task naming a missing Category, a duplicate date or Category name) is 422 `invalid_backup` and changes nothing (D34)
-- [ ] API tests: export then import into another Owner yields the same data; importing replaces rather than merges; a malformed file leaves data unchanged; the export holds no password hash or session (T2)
-- [ ] `docs/api.md` and the web API types file are updated in this ticket
-- [ ] A "สำรองข้อมูล" card: a download button, and a file picker whose import first asks for confirmation that all current data will be replaced; toasts on success and failure
-- [ ] Every endpoint in `docs/api.md` matches the code
-- [ ] A stage 6 hand-test checklist exists in `docs/` (T4)
-- [ ] API tests and web checks pass
+- [x] `GET /api/backup` answers the backup as a JSON download (`Content-Disposition: attachment`): `format` "planner-backup", `version` 1, `exportedAt`, and the Owner's Categories, Tasks, Routine, every Daily Checklist and Settings; no password and no sessions (D33)
+- [x] `POST /api/backup` with a backup body replaces all of the Owner's Tasks, Categories, Routine, Daily Checklists and Settings in one transaction; IDs are assigned anew and Tasks keep their Categories through the backup's IDs; answers the counts imported
+- [x] A file in the wrong format (wrong `format` or `version`, a broken field, a Task naming a missing Category, a duplicate date or Category name) is 422 `invalid_backup` and changes nothing (D34)
+- [x] API tests: export then import into another Owner yields the same data; importing replaces rather than merges; a malformed file leaves data unchanged; the export holds no password hash or session (T2)
+- [x] `docs/api.md` and the web API types file are updated in this ticket
+- [x] A "สำรองข้อมูล" card: a download button, and a file picker whose import first asks for confirmation that all current data will be replaced; toasts on success and failure
+- [x] Every endpoint in `docs/api.md` matches the code
+- [x] A stage 6 hand-test checklist exists in `docs/` (T4)
+- [x] API tests and web checks pass

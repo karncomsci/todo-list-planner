@@ -50,6 +50,8 @@ func New(pool *pgxpool.Pool, opts Options) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      "planner-api",
 		ErrorHandler: handleError,
+		// A backup import carries all of an Owner's data in one request (D34).
+		BodyLimit: 32 * 1024 * 1024,
 	})
 	app.Use(recover.New())
 
@@ -83,6 +85,8 @@ func New(pool *pgxpool.Pool, opts Options) *fiber.App {
 	owned.Get("/settings", s.getSettings)
 	owned.Put("/settings", s.saveSettings)
 	owned.Get("/reports", s.reports)
+	owned.Get("/backup", s.exportBackup)
+	owned.Post("/backup", s.importBackup)
 
 	return app
 }
