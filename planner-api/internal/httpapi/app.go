@@ -72,6 +72,9 @@ func New(pool *pgxpool.Pool, opts Options) *fiber.App {
 	owned.Get("/categories", s.listCategories)
 	owned.Post("/categories", s.createCategory)
 	owned.Get("/overview", s.overview)
+	owned.Get("/routine", s.getRoutine)
+	owned.Put("/routine", s.saveRoutine)
+	owned.Delete("/routine", s.clearRoutine)
 
 	return app
 }

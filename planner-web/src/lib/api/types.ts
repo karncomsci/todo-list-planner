@@ -150,3 +150,21 @@ export type CategoryCount = {
   category: Category | null;
   count: number;
 };
+
+// Routine
+
+/** One hour of the Routine, 5 to 23; text is "" for an empty hour (D26). */
+export type RoutineEntry = {
+  hour: number;
+  text: string;
+};
+
+/** Every answer carries all nineteen hours, in order. */
+export type RoutineResponse = {
+  entries: RoutineEntry[];
+};
+
+/** Replaces the whole template; hours left out become empty. */
+export type RoutineRequest = {
+  entries: RoutineEntry[];
+};

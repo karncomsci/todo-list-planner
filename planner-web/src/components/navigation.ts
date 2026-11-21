@@ -20,7 +20,7 @@ export type NavItem = {
 const overview: NavItem = { href: "/overview", label: "ภาพรวม", icon: LayoutDashboard, ready: true };
 const calendar: NavItem = { href: "/calendar", label: "ตารางงาน", icon: CalendarDays, ready: true };
 const taskEntry: NavItem = { href: "/tasks", label: "บันทึกงาน", icon: PlusCircle, ready: true };
-const lifeSchedule: NavItem = { href: "/life", label: "ตารางชีวิต", icon: Clock, ready: false };
+const lifeSchedule: NavItem = { href: "/life", label: "ตารางชีวิต", icon: Clock, ready: true };
 const reports: NavItem = { href: "/reports", label: "รายงาน", icon: ChartColumn, ready: false };
 const settings: NavItem = { href: "/settings", label: "ตั้งค่า", icon: Settings, ready: false };
 

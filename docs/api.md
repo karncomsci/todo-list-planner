@@ -232,3 +232,26 @@ The Overview shows the current state only (D30). Every list and number on it is 
 | `month.byCategory` | The same Tasks per Category, for the Category chart (story 39). Only Categories with at least one of these Tasks appear. Uncategorised Tasks are one entry with `category: null`, present only when there are some, and always last. The others are ordered by count, largest first, then by name |
 
 - 200 with the body above
+
+### Routine
+
+The Routine is one template per Owner: a text entry for each hour from 05:00 to 23:00, with no ticking and no history (D26). It never appears on the Calendar (D29).
+
+```json
+{ "entries": [{ "hour": 5, "text": "Wake up" }, { "hour": 6, "text": "" }, …] }
+```
+
+Every answer carries all nineteen hours, 5 to 23 in order; `text` is `""` for an empty hour.
+
+`GET /api/routine`: the Owner's Routine.
+
+- 200 with the body above
+
+`PUT /api/routine`: replace the whole template (stories 40, 41). The body has the same shape; an hour left out, or sent with empty text, becomes empty. Text is stored trimmed.
+
+- 200 with the saved Routine, all nineteen hours
+- 422 on `entries`: `out_of_range` when an hour is not 5 to 23 or is given twice, `too_long` when a text is over 200 characters. Nothing is saved.
+
+`DELETE /api/routine`: clear every hour in one step (story 42).
+
+- 204, no body

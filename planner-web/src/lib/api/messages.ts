@@ -13,6 +13,7 @@ const fieldLabels: Record<string, string> = {
   progress: "ความคืบหน้า",
   note: "โน้ต",
   categoryId: "หมวดหมู่",
+  entries: "กิจวัตร",
 };
 
 /** Thai text per error code. Validation codes take the field's Thai name. */

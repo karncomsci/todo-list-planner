@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Status | Approved. Stages 1 to 3 built (tickets 01 to 18 in `docs/tickets/`). Next step: the Owner hand-tests stage 3, then stage 4 (Life Schedule) is broken into tickets |
-| Document version | 12 |
+| Document version | 13 |
 | Date | 21 Nov 2026 |
 | Source | Synthesised from a 36-question design interview (Q1 to Q36) and the mockups |
 | Vocabulary | Follows GLOSSARY.md in the parent folder (see the term table below) |
@@ -209,7 +209,7 @@ The look is newly designed, modern, with short animations, light and dark themes
 ### Overview and Reports
 
 - **D30 Overview**: shows the current state only: today's Tasks, all Overdue Tasks, and this month's summary (Q11). Today's Tasks are those whose span covers today, a span running from the start date, or the due date when there is none, to the due date. This month's summary counts the Tasks whose due date falls in the current month in Thailand, and the charts by Status and by Category count that same set
-- **D31 Reports**: four period choices (this week, this month, this year, custom) and six metrics: Tasks completed per week, share of Tasks completed on time, Task counts by Category and by Priority, number of Overdue Tasks, average glasses of water per day, number of days with all three meals ticked (Q11, Q33)
+- **D31 Reports**: four period choices (this week, this month, this year, custom) and six metrics: Tasks completed per week, share of Tasks completed on time, Task counts by Category and by Priority, number of Overdue Tasks, average glasses of water per day, number of days with all three meals ticked (Q11, Q33). The share completed on time counts only settled Tasks (done, or due before today), so Tasks still ahead do not count as late; the water average runs over the period's days up to today, a day without a record counting as 0 (D27)
 - **D32 Calculation**: all Overview and Reports numbers are calculated by the API. The front end only displays them
 
 ### Backup and restore
@@ -288,7 +288,7 @@ These were decided by the spec author to make the spec complete. Unconfirmed one
 
 ### Open items
 
-- Stage 1 is broken into tickets 01 to 11, stage 2 into tickets 12 to 14 and stage 3 into tickets 15 to 18 in `docs/tickets/`, one Markdown file each, with blocking edges. Stages 1 to 3 are built. Stages 4 to 6 are not yet broken into tickets
+- Stage 1 is broken into tickets 01 to 11, stage 2 into tickets 12 to 14 and stage 3 into tickets 15 to 18 in `docs/tickets/`, one Markdown file each, with blocking edges. Stages 1 to 3 are built. Stages 4 to 6 are broken into tickets 19 to 26
 - The dark theme has a mockup for one page only (Calendar month View); other pages follow the same colour set
 - This spec has not been published to an issue tracker because the project has none configured; tickets live as local files instead
 
@@ -314,3 +314,4 @@ These were decided by the spec author to make the spec complete. Unconfirmed one
 | 10 | 21 Nov 2026 | Stages 1 and 2 committed. Stage 3 broken into tickets 15 to 18. Owner confirmed: today's Tasks are those whose span covers today, this month's summary and its charts count Tasks due this month (D30), and charts use Recharts with its own animation (D5, D7) |
 | 11 | 21 Nov 2026 | Stage 3 built (tickets 15 to 18); hand-test checklist in `docs/stage-3-checklist.md` |
 | 12 | 21 Nov 2026 | Owner chose one git repository for the whole project: D1 retired and replaced by D37; ADR 0002 written. The two former repositories' histories are kept in the new one |
+| 13 | 22 Nov 2026 | Owner asked for stages 4 to 6 to be built without stopping for approval. Broken into tickets 19 to 26; D31 now says how the on-time share and the water average treat days and Tasks still ahead |

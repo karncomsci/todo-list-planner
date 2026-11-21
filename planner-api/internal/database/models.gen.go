@@ -24,6 +24,12 @@ type Owner struct {
 	CreatedAt    time.Time
 }
 
+type RoutineEntry struct {
+	OwnerID int64
+	Hour    int16
+	Text    string
+}
+
 type Session struct {
 	TokenHash []byte
 	OwnerID   int64
