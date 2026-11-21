@@ -12,6 +12,7 @@ Next.js 16 App Router with Cache Components on, TypeScript, Tailwind CSS 4, luci
 
 - `src/proxy.ts`: forwards `/api/*` to the Go API at `API_URL`, read at run time, and sends visitors without a session cookie to `/sign-in?next=…`. It checks only that the cookie exists; the API validates it, and `api()` in the client sends the browser to sign-in on any `unauthorized` answer.
 - `src/lib/api/messages.ts`: Thai text for every error code, and Thai names of request fields. Add each new code and field here.
+- `src/lib/dates.ts`: every BE/CE conversion and Thai date format (D9). `src/components/date-picker.tsx` is the one date field, a calendar the Owner picks from (react-day-picker); use it for every date. `src/lib/tasks.ts`: Thai labels and colours for Status and Priority.
 - `src/app/(app)/`: pages inside the app shell (left menu on computers, bottom menu on phones). Pages without the shell, such as sign-in, sit outside this group.
 - `src/components/navigation.ts`: the menu. Set a page's `ready` to true in the ticket that builds it.
 - `src/lib/api/types.ts`: every API type, by hand (D11). `src/lib/api/client.ts`: the only place that calls `fetch`.

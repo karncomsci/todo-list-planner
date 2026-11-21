@@ -4,11 +4,26 @@ import { ApiError } from "./client";
 const fieldLabels: Record<string, string> = {
   email: "อีเมล",
   password: "รหัสผ่าน",
+  name: "ชื่องาน",
+  dueDate: "วันครบกำหนด",
+  startDate: "วันเริ่ม",
+  startTime: "เวลาเริ่ม",
+  endTime: "เวลาสิ้นสุด",
+  priority: "ความสำคัญ",
+  progress: "ความคืบหน้า",
+  note: "โน้ต",
 };
 
 /** Thai text per error code. Validation codes take the field's Thai name. */
 const messages: Record<string, (label: string) => string> = {
   required: (label) => `กรุณากรอก${label}`,
+  too_long: (label) => `${label}ยาวเกินไป`,
+  invalid_date: (label) => `${label}ไม่ใช่วันที่ที่ถูกต้อง`,
+  out_of_range: (label) => `${label}อยู่นอกช่วงที่รับได้`,
+  invalid_time: (label) => `${label}ไม่ใช่เวลาที่ถูกต้อง`,
+  invalid_choice: (label) => `${label}ไม่ถูกต้อง`,
+  start_after_due: () => "วันเริ่มต้องไม่อยู่หลังวันครบกำหนด",
+  end_before_start: () => "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม",
   invalid_credentials: () => "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
   too_many_attempts: () => "เข้าสู่ระบบผิดหลายครั้งเกินไป กรุณารอ 1 นาทีแล้วลองใหม่",
   unauthorized: () => "กรุณาเข้าสู่ระบบก่อน",
