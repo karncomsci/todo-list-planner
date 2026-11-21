@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// The Calendar is the landing page until Overview arrives in stage 3.
+// The Overview is the first page after sign-in (story 36).
 export default function HomePage() {
-  redirect("/calendar");
+  redirect("/overview");
 }

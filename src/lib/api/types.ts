@@ -114,3 +114,39 @@ export type TaskResponse = {
 export type TaskListResponse = {
   tasks: Task[];
 };
+
+// Overview
+
+/** The current state only, all calculated by the API (D30, D32). */
+export type OverviewResponse = {
+  /** Today in Thailand, as the API counts it. */
+  today: IsoDate;
+  /** Every Task whose span covers today, done ones included, in Calendar order. */
+  todayTasks: Task[];
+  /** Every Overdue Task, however old, oldest due date first (D23). */
+  overdueTasks: Task[];
+  month: MonthSummary;
+};
+
+/** Counts over the Tasks due in the current month in Thailand (D30, story 38). */
+export type MonthSummary = {
+  /** "YYYY-MM", CE. */
+  month: string;
+  total: number;
+  /** Progress 100. */
+  done: number;
+  /** Progress 1 to 99. */
+  inProgress: number;
+  /** Overdue now (D23). */
+  overdue: number;
+  /** The same Tasks per Status; all three present, adding up to total. */
+  byStatus: Record<TaskStatus, number>;
+  /** The same Tasks per Category, largest first; uncategorised last, as category null. */
+  byCategory: CategoryCount[];
+};
+
+export type CategoryCount = {
+  /** null for the Tasks that have no Category. */
+  category: Category | null;
+  count: number;
+};

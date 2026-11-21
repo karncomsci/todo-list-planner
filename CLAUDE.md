@@ -6,13 +6,14 @@ Next.js front end for the Task Calendar Planner. Read the parent `../CLAUDE.md` 
 
 ## Stack (D5–D8)
 
-Next.js 16 App Router with Cache Components on, TypeScript, Tailwind CSS 4, lucide-react icons, sonner toasts. FullCalendar 6 (standard bundle, MIT plugins only; version 7 rebuilt its packages and has no separate day-grid plugin, so stay on 6). Motion (`motion/react`).
+Next.js 16 App Router with Cache Components on, TypeScript, Tailwind CSS 4, lucide-react icons, sonner toasts. FullCalendar 6 (standard bundle, MIT plugins only; version 7 rebuilt its packages and has no separate day-grid plugin, so stay on 6). Motion (`motion/react`). Recharts 3 for charts (D5), with `react-is` pinned to the React version, which Recharts needs to recognise React 19 elements; chart colours are the theme's CSS variables (`var(--primary)`), so they follow the theme.
 
 ## Layout
 
 - `src/proxy.ts`: forwards `/api/*` to the Go API at `API_URL`, read at run time, and sends visitors without a session cookie to `/sign-in?next=…`. It checks only that the cookie exists; the API validates it, and `api()` in the client sends the browser to sign-in on any `unauthorized` answer.
 - `src/lib/api/messages.ts`: Thai text for every error code, and Thai names of request fields. Add each new code and field here.
 - `src/lib/dates.ts`: every BE/CE conversion and Thai date format (D9). `src/components/date-picker.tsx` is the one date field, a calendar the Owner picks from (react-day-picker); use it for every date. `src/lib/tasks.ts`: Thai labels and colours for Status and Priority. `src/lib/calendar.ts`: pure Calendar logic (Tasks to FullCalendar events; the phone grid, day lists and dots). `src/components/calendar/` renders it in the browser only: FullCalendar from 48rem up (`computer-calendar.tsx`, one component for every View, with the View switcher), the compact phone calendar below, the same width at which the menus swap. Calendar colours live in `globals.css` as `task-*` classes.
+- `src/components/overview/`: the Overview page (D30); every list and number on it comes from `GET /api/overview`. `src/components/tasks/task-row.tsx` is the one Task row with its tick circle, shared by the phone Calendar's day list and the Overview.
 - `src/app/(app)/`: pages inside the app shell (left menu on computers, bottom menu on phones). Pages without the shell, such as sign-in, sit outside this group.
 - `src/components/navigation.ts`: the menu. Set a page's `ready` to true in the ticket that builds it.
 - `src/lib/api/types.ts`: every API type, by hand (D11). `src/lib/api/client.ts`: the only place that calls `fetch`.

@@ -1,15 +1,14 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TaskEditDialog } from "@/components/tasks/task-edit-dialog";
-import { DoneMark } from "@/components/tasks/done-mark";
+import { TaskRow } from "@/components/tasks/task-row";
 import { tickDone } from "@/components/tasks/tick-done";
 import { api } from "@/lib/api/client";
-import type { Priority, Task, TaskListResponse } from "@/lib/api/types";
+import type { Task, TaskListResponse } from "@/lib/api/types";
 import { dayDots, type DotKind, monthGrid, tasksOnDay } from "@/lib/calendar";
 import { addMonths, formatThaiDate, type IsoDate, startOfMonth, todayIso } from "@/lib/dates";
-import { priorityDotClass, priorityLabels, statusLabels, timeRange } from "@/lib/tasks";
 
 const weekdays = ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"];
 
@@ -19,12 +18,6 @@ const dotClass: Record<DotKind, string> = {
   medium: "bg-priority-medium",
   low: "bg-priority-low",
   done: "bg-muted/50",
-};
-
-const tickBorderClass: Record<Priority, string> = {
-  high: "border-priority-high",
-  medium: "border-priority-medium",
-  low: "border-priority-low",
 };
 
 /**
@@ -173,7 +166,7 @@ export default function PhoneCalendar() {
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {dayTasks.map((task) => (
-              <DayTask key={task.id} task={task} onTick={tick} onOpen={setEditing} />
+              <TaskRow key={task.id} task={task} onTick={tick} onOpen={setEditing} />
             ))}
           </ul>
         )}
@@ -181,63 +174,5 @@ export default function PhoneCalendar() {
 
       <TaskEditDialog task={editing} onClose={() => setEditing(null)} onSaved={reload} onDeleted={reload} />
     </div>
-  );
-}
-
-type DayTaskProps = {
-  task: Task;
-  onTick: (task: Task) => void;
-  onOpen: (task: Task) => void;
-};
-
-/** One Task in the day's list: a tick circle in its colour, then the Task, which opens the form. */
-function DayTask({ task, onTick, onOpen }: DayTaskProps) {
-  const done = task.status === "done";
-  const colour = task.isOverdue ? "bg-danger" : priorityDotClass[task.priority];
-  const times = timeRange(task.startTime, task.endTime);
-  const span =
-    task.startDate && task.startDate !== task.dueDate
-      ? `${formatThaiDate(task.startDate, "short")} – ${formatThaiDate(task.dueDate, "short")}`
-      : "";
-
-  return (
-    <li className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-      {done ? (
-        <DoneMark
-          taskId={task.id}
-          className={`flex size-7 shrink-0 items-center justify-center rounded-full ${colour} text-surface`}
-          title="เสร็จแล้ว ลดความคืบหน้าในฟอร์มเพื่อยกเลิก"
-        >
-          <Check className="size-4" strokeWidth={3} aria-label="เสร็จแล้ว" />
-        </DoneMark>
-      ) : (
-        // A 44px touch target around a 28px circle.
-        <button
-          type="button"
-          onClick={() => onTick(task)}
-          aria-label={`ทำเครื่องหมายว่าเสร็จ: ${task.name}`}
-          className="-m-2 flex size-11 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
-        >
-          <span
-            className={`size-7 rounded-full border-2 ${
-              task.isOverdue ? "border-danger" : tickBorderClass[task.priority]
-            } bg-surface`}
-          />
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={() => onOpen(task)}
-        aria-label={`แก้ไขงาน ${task.name}`}
-        className="min-w-0 flex-1 rounded-xl px-1 py-1 text-left hover:bg-bg focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
-      >
-        <p className={`truncate ${done ? "text-muted line-through" : ""}`}>{task.name}</p>
-        <p className={`truncate text-sm ${task.isOverdue ? "text-danger" : "text-muted"}`}>
-          {[times, span, task.isOverdue ? "เลยกำหนด" : statusLabels[task.status], `ความสำคัญ${priorityLabels[task.priority]}`]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-      </button>
-    </li>
   );
 }
