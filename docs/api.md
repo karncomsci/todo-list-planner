@@ -177,7 +177,7 @@ A Task as every Task endpoint returns it (D20). `status` and `isOverdue` are der
 
 ### Category
 
-A Category groups Tasks (D24). Stage 1 has list and create, reached from the Task form; rename and delete arrive in stage 6.
+A Category groups Tasks (D24). List and create are reached from the Task form; rename and delete from Settings (stories 55, 56).
 
 ```json
 { "id": 3, "name": "งานบ้าน" }
@@ -195,6 +195,17 @@ A Category groups Tasks (D24). Stage 1 has list and create, reached from the Tas
 
 - 201 `{ "category": Category }`. The name is stored trimmed.
 - 422 on `name`: `required`, `too_long` (over 50 characters), `duplicate` (names are unique per Owner, ignoring letter case and surrounding spaces)
+
+`PUT /api/categories/{id}`: rename a Category (story 55). The body and its rules are the same as create; renaming to its own name in another letter case is allowed. Its Tasks keep it.
+
+- 200 `{ "category": Category }`
+- 422 on `name` as for create
+- 404 `not_found` when the Owner has no Category with this ID
+
+`DELETE /api/categories/{id}`: delete a Category. Its Tasks stay, with `category: null` (D24, story 56).
+
+- 204, no body
+- 404 `not_found` when the Owner has no Category with this ID
 
 ### Overview
 

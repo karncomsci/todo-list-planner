@@ -47,6 +47,9 @@ export type CreateCategoryRequest = {
   name: string;
 };
 
+/** Renaming takes the same body and rules as create. */
+export type RenameCategoryRequest = CreateCategoryRequest;
+
 export type CategoryResponse = {
   category: Category;
 };

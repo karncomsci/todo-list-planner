@@ -32,6 +32,25 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 	return i, err
 }
 
+const deleteCategory = `-- name: DeleteCategory :execrows
+DELETE FROM categories
+WHERE id = $1 AND owner_id = $2
+`
+
+type DeleteCategoryParams struct {
+	ID      int64
+	OwnerID int64
+}
+
+// Its Tasks stay, uncategorised, through the foreign key (D24).
+func (q *Queries) DeleteCategory(ctx context.Context, arg DeleteCategoryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteCategory, arg.ID, arg.OwnerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getCategory = `-- name: GetCategory :one
 SELECT id, owner_id, name, created_at FROM categories
 WHERE id = $1 AND owner_id = $2
@@ -84,4 +103,28 @@ func (q *Queries) ListCategories(ctx context.Context, ownerID int64) ([]Category
 		return nil, err
 	}
 	return items, nil
+}
+
+const renameCategory = `-- name: RenameCategory :one
+UPDATE categories SET name = $1
+WHERE id = $2 AND owner_id = $3
+RETURNING id, owner_id, name, created_at
+`
+
+type RenameCategoryParams struct {
+	Name    string
+	ID      int64
+	OwnerID int64
+}
+
+func (q *Queries) RenameCategory(ctx context.Context, arg RenameCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, renameCategory, arg.Name, arg.ID, arg.OwnerID)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.CreatedAt,
+	)
+	return i, err
 }
