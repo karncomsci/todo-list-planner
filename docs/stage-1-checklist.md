@@ -37,7 +37,7 @@ Test data: today's date matters, so use real dates around today.
 
 ### Edit and delete (stories 15, 16)
 
-- [ ] Clicking a Task in "งานล่าสุด" opens "แก้ไขงาน" with every field filled in
+- [ ] Clicking a Task in "งานล่าสุด" opens the Task read-only with every field shown; แก้ไข opens the form with every field filled in, and ยกเลิก goes back to the review; บันทึกการแก้ไข asks first, naming the changed fields, and กลับไปแก้ต่อ saves nothing
 - [ ] Every field can be changed and optional fields cleared (open the date picker and press "ล้าง" for the start date); "บันทึกการแก้ไข" saves and closes
 - [ ] "ลบงาน" asks "ลบงาน … ถาวร?"; "ไม่ลบ" keeps the Task; "ลบถาวร" removes it for good
 - [ ] Escape and "ยกเลิก" close the form without saving
@@ -51,7 +51,7 @@ Test data: today's date matters, so use real dates around today.
 - [ ] A Task without a start date sits on its due date only
 - [ ] Colours follow Priority (สูง orange, กลาง yellow, ต่ำ blue); an Overdue Task is red and stays on its due date
 - [ ] A timed Task shows its start time
-- [ ] Clicking a Task opens "แก้ไขงาน" over the Calendar; saving or deleting updates the Calendar at once
+- [ ] Clicking a Task shows it over the Calendar; after แก้ไข, saving or deleting updates the Calendar at once
 - [ ] The circle before a Task ticks it done: a toast says "ทำเสร็จแล้ว", the name is struck through and an Overdue Task is no longer red. Clicking the circle does not open the form
 - [ ] A done Task is undone by lowering Progress in the form
 - [ ] Tab reaches each Task; Enter opens it

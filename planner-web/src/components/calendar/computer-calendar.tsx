@@ -14,7 +14,7 @@ import multiMonthPlugin from "@fullcalendar/multimonth";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { Check, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { TaskEditDialog } from "@/components/tasks/task-edit-dialog";
+import { TaskDialog } from "@/components/tasks/task-dialog";
 import { DoneMark } from "@/components/tasks/done-mark";
 import { tickDone } from "@/components/tasks/tick-done";
 import { toast } from "sonner";
@@ -209,7 +209,7 @@ export default function ComputerCalendar() {
         eventClick={eventClick}
         eventContent={eventContent}
       />
-      <TaskEditDialog task={editing} onClose={() => setEditing(null)} onSaved={refresh} onDeleted={refresh} />
+      <TaskDialog task={editing} onClose={() => setEditing(null)} onSaved={refresh} onDeleted={refresh} />
     </section>
   );
 }

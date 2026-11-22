@@ -63,7 +63,7 @@ export function TaskRow({ task, onTick, onOpen, showDueDate = false }: Props) {
       <button
         type="button"
         onClick={() => onOpen(task)}
-        aria-label={`แก้ไขงาน ${task.name}`}
+        aria-label={`ดูงาน ${task.name}`}
         className="min-w-0 flex-1 rounded-xl px-1 py-1 text-left hover:bg-bg focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
       >
         <p className={`truncate ${done ? "text-muted line-through" : ""}`}>{task.name}</p>

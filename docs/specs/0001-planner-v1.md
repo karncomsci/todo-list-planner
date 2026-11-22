@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Status | Approved. Stages 1 to 6 built: the first release is complete (tickets 01 to 26 in `docs/tickets/`). Next step: the Owner hand-tests stages 3 to 6 with the checklists in `docs/` |
-| Document version | 14 |
+| Document version | 17 |
 | Date | 21 Nov 2026 |
 | Source | Synthesised from a 36-question design interview (Q1 to Q36) and the mockups |
 | Vocabulary | Follows GLOSSARY.md in the parent folder (see the term table below) |
@@ -75,7 +75,7 @@ The look is newly designed, modern, with short animations, light and dark themes
 12. As the Owner, I want to set a Task's Progress as a percentage, so that I record how far it has got
 13. As the Owner, I want Status to follow Progress automatically, so that I do not maintain two values that can disagree
 14. As the Owner, I want to write a note on a Task, so that I keep details and things not to forget
-15. As the Owner, I want to edit every field of a saved Task, so that I can adjust when plans change
+15. As the Owner, I want to edit every field of a saved Task, so that I can adjust when plans change, confirming before the change is saved
 16. As the Owner, I want to delete a Task with a confirmation step, so that I do not delete by mistake
 17. As the Owner, I want to see recent Tasks beside the form, so that I can confirm the Task I just saved is there
 18. As the Owner, I want a message naming the field that is wrong, such as a due date before the start date, so that I can fix it at once
@@ -93,7 +93,7 @@ The look is newly designed, modern, with short animations, light and dark themes
 27. As the Owner, I want Priority shown by colour, so that I find important Tasks fast
 28. As the Owner, I want an Overdue Task shown in red and left on its original due date, so that I know which day I missed
 29. As the Owner, I want completed Tasks shown struck through on the calendar, so that I see what is done without deleting it
-30. As the Owner, I want to click a Task on the calendar to edit it, so that I do not look for it on another page
+30. As the Owner, I want to click a Task on the calendar to review it, with an edit button to change it, so that I do not look for it on another page and do not change it by accident
 31. As the Owner, I want to tick a Task as done directly on the Calendar, so that I close it in one step
 32. As the Owner, I want today clearly marked, so that I know where I am
 33. As the Owner, I want weeks to start on Monday, so that they match my working week
@@ -161,7 +161,7 @@ The look is newly designed, modern, with short animations, light and dark themes
 - **D6 Calendar**: FullCalendar standard bundle (MIT licence) for all four Views. The year View uses the multi-month view. No premium plugins (Q21)
 - **D7 Animation**: the Motion library, used for page transitions, the form sliding in and out, ticking a Task done, numbers on the Overview, and cards that move on hover. Charts animate with Recharts' own animation instead of Motion. Each animation is shorter than 0.3 seconds and turns off when the device asks for reduced motion. No extra animation is added to the calendar grid (Q32)
 - **D8 Theme**: light and dark, switchable, with the choice remembered in the browser (Q31)
-- **D9 Language and dates**: Thai only. Years shown in BE. Weeks start on Monday. One time zone, Thailand. Conversion between BE and CE happens only in the front end; the API and database use CE (Q27)
+- **D9 Language and dates**: Thai only. Years shown in BE. Weeks start on Monday. One time zone, Thailand. Conversion between BE and CE happens only in the front end; the API and database use CE (Q27). Times of day are 24-hour everywhere, whatever the device's clock setting; a time field names the part of the day beside the value: 00:00–04:59 late night, 05:00–11:59 morning, 12:00–12:59 noon, 13:00–15:59 afternoon, 16:00–18:59 evening, 19:00–23:59 night
 - **D10 Layout**: a left menu on computers. On phones a bottom menu with five buttons: Overview, Calendar, Add Task, Life Schedule, and More, which holds Reports and Settings. The phone Calendar shows Tasks as coloured dots with the list for the selected day, and this compact calendar is the phone's main Calendar; the hourly day and week Views are designed for computers. On phones Settings stacks its cards in one column (Q8, Q30, mockups)
 - **D11 API types**: the front end keeps all API data types in one place, written by hand, not generated from a specification (Q18)
 
@@ -316,3 +316,6 @@ These were decided by the spec author to make the spec complete. Unconfirmed one
 | 12 | 21 Nov 2026 | Owner chose one git repository for the whole project: D1 retired and replaced by D37; ADR 0002 written. The two former repositories' histories are kept in the new one |
 | 13 | 22 Nov 2026 | Owner asked for stages 4 to 6 to be built without stopping for approval. Broken into tickets 19 to 26; D31 now says how the on-time share and the water average treat days and Tasks still ahead |
 | 14 | 22 Nov 2026 | Stages 4 to 6 built (tickets 19 to 26); hand-test checklists in `docs/stage-4-checklist.md` to `docs/stage-6-checklist.md`. Built without a decision change; choices the spec left open are recorded in the tickets and `docs/api.md` (password change ends other sessions; backup file format; Water Goal 1 to 30 glasses) |
+| 15 | 22 Nov 2026 | Owner asked for 24-hour time fields that name the part of the day: added to D9. The Task form's start and end time are picked from an hour list (00–23, each naming its part of the day) and a minute list (every five minutes), not the browser's time picker, which follows the device's 12-hour setting |
+| 16 | 22 Nov 2026 | Owner asked that clicking a Task (Calendar, Add Task's recent list, Overview) first shows it read-only, with an edit button that opens the form: story 30 reworded. Cancel in the form returns to the review |
+| 17 | 22 Nov 2026 | Owner asked for a confirmation before an edited Task is saved: story 15 extended. The confirmation names the fields that changed; adding a new Task does not ask |

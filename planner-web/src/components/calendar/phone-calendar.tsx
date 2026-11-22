@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TaskEditDialog } from "@/components/tasks/task-edit-dialog";
+import { TaskDialog } from "@/components/tasks/task-dialog";
 import { TaskRow } from "@/components/tasks/task-row";
 import { tickDone } from "@/components/tasks/tick-done";
 import { api } from "@/lib/api/client";
@@ -172,7 +172,7 @@ export default function PhoneCalendar() {
         )}
       </section>
 
-      <TaskEditDialog task={editing} onClose={() => setEditing(null)} onSaved={reload} onDeleted={reload} />
+      <TaskDialog task={editing} onClose={() => setEditing(null)} onSaved={reload} onDeleted={reload} />
     </div>
   );
 }

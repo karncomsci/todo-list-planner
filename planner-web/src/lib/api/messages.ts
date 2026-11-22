@@ -1,7 +1,7 @@
 import { ApiError } from "./client";
 
 /** Thai names of request fields, used in validation messages. */
-const fieldLabels: Record<string, string> = {
+export const fieldLabels: Record<string, string> = {
   email: "อีเมล",
   password: "รหัสผ่าน",
   name: "ชื่องาน",

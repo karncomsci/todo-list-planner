@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"planner-api/internal/database"
+	"planner-api/internal/planner"
 )
 
 // parseRange reads ?from=&to=, CE dates with both ends inclusive, at most
@@ -80,13 +81,13 @@ func (s *server) reports(c fiber.Ctx) error {
 	}
 	owner := currentOwnerOf(c).ID
 	todayText := s.today()
-	today, err := time.Parse(dateLayout, todayText)
+	today, err := time.Parse(planner.DateLayout, todayText)
 	if err != nil {
 		return err
 	}
 	report := Report{
-		From:       from.Format(dateLayout),
-		To:         to.Format(dateLayout),
+		From:       from.Format(planner.DateLayout),
+		To:         to.Format(planner.DateLayout),
 		ByCategory: []CategoryCount{},
 		ByPriority: map[string]int64{"high": 0, "medium": 0, "low": 0},
 	}
@@ -98,11 +99,11 @@ func (s *server) reports(c fiber.Ctx) error {
 	}
 	perWeek := map[string]int64{}
 	for _, row := range completions {
-		perWeek[mondayOf(row.Day).Format(dateLayout)] += row.Completed
+		perWeek[mondayOf(row.Day).Format(planner.DateLayout)] += row.Completed
 	}
 	report.CompletedPerWeek = []WeekCount{}
 	for week := mondayOf(from); !week.After(to); week = week.AddDate(0, 0, 7) {
-		key := week.Format(dateLayout)
+		key := week.Format(planner.DateLayout)
 		report.CompletedPerWeek = append(report.CompletedPerWeek, WeekCount{WeekStart: key, Count: perWeek[key]})
 	}
 
@@ -125,15 +126,15 @@ func (s *server) reports(c fiber.Ctx) error {
 		} else {
 			uncategorised++
 		}
-		due := task.DueDate.Format(dateLayout)
+		due := task.DueDate.Format(planner.DateLayout)
 		switch {
 		case task.Progress >= 100 && task.CompletedAt != nil:
-			if task.CompletedAt.In(thailand).Format(dateLayout) <= due {
+			if planner.DateOf(*task.CompletedAt) <= due {
 				report.OnTime.OnTime++
 			} else {
 				report.OnTime.Late++
 			}
-		case isOverdue(task.DueDate, int(task.Progress), todayText):
+		case planner.IsOverdue(task.DueDate, int(task.Progress), todayText):
 			report.OnTime.NotDone++
 			report.Overdue++
 		}

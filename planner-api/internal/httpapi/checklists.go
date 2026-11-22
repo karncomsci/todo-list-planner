@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"planner-api/internal/database"
+	"planner-api/internal/planner"
 )
 
 const (
@@ -35,7 +36,7 @@ type Checklist struct {
 
 func toChecklist(row database.DailyChecklist) Checklist {
 	return Checklist{
-		Date:          row.Day.Format(dateLayout),
+		Date:          row.Day.Format(planner.DateLayout),
 		Glasses:       int(row.Glasses),
 		BreakfastMenu: row.BreakfastMenu,
 		BreakfastDone: row.BreakfastDone,
@@ -60,7 +61,7 @@ func (s *server) getChecklist(c fiber.Ctx) error {
 	}
 	row, err := s.queries.GetDailyChecklist(c.Context(), database.GetDailyChecklistParams{OwnerID: currentOwnerOf(c).ID, Day: day})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return c.JSON(fiber.Map{"checklist": Checklist{Date: day.Format(dateLayout)}})
+		return c.JSON(fiber.Map{"checklist": Checklist{Date: day.Format(planner.DateLayout)}})
 	}
 	if err != nil {
 		return err

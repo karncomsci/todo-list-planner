@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"planner-api/internal/database"
+	"planner-api/internal/planner"
 )
 
 // MonthSummary is this month's summary on the Overview: the Owner's Tasks due
@@ -36,7 +37,7 @@ type CategoryCount struct {
 func (s *server) overview(c fiber.Ctx) error {
 	owner := currentOwnerOf(c).ID
 	today := s.today()
-	day, err := time.Parse(dateLayout, today)
+	day, err := time.Parse(planner.DateLayout, today)
 	if err != nil {
 		return err
 	}
@@ -97,9 +98,9 @@ func (s *server) overview(c fiber.Ctx) error {
 		InProgress: counts.InProgress,
 		Overdue:    counts.Overdue,
 		ByStatus: map[string]int64{
-			statusOf(0):   counts.Total - counts.InProgress - counts.Done,
-			statusOf(1):   counts.InProgress,
-			statusOf(100): counts.Done,
+			planner.StatusNotStarted: counts.Total - counts.InProgress - counts.Done,
+			planner.StatusInProgress: counts.InProgress,
+			planner.StatusDone:       counts.Done,
 		},
 		ByCategory: byCategory,
 	}

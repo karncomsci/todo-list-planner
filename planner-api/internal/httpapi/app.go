@@ -4,13 +4,13 @@ package httpapi
 import (
 	"context"
 	"time"
-	_ "time/tzdata" // Asia/Bangkok must load in a minimal container image
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"planner-api/internal/database"
+	"planner-api/internal/planner"
 )
 
 // Options are the deployment settings of the HTTP layer.
@@ -27,18 +27,9 @@ type server struct {
 	opts    Options
 }
 
-// thailand is the one time zone of the system (D9).
-var thailand = func() *time.Location {
-	loc, err := time.LoadLocation("Asia/Bangkok")
-	if err != nil {
-		panic(err)
-	}
-	return loc
-}()
-
 // today is the current date in Thailand, as YYYY-MM-DD.
 func (s *server) today() string {
-	return s.opts.Now().In(thailand).Format(dateLayout)
+	return planner.DateOf(s.opts.Now())
 }
 
 // New builds the Fiber app with every route under /api.

@@ -13,10 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"planner-api/internal/database"
+	"planner-api/internal/planner"
 )
 
 const (
-	dateLayout    = "2006-01-02"
 	maxNameLength = 200
 	maxNoteLength = 2000
 	maxRecent     = 50
@@ -43,24 +43,6 @@ type Task struct {
 	UpdatedAt   time.Time  `json:"updatedAt"`
 }
 
-// statusOf derives Status from Progress: 0 not started, 1–99 in progress, 100 done (D21).
-func statusOf(progress int) string {
-	switch {
-	case progress >= 100:
-		return "done"
-	case progress > 0:
-		return "in_progress"
-	default:
-		return "not_started"
-	}
-}
-
-// isOverdue: the due date has passed and the Task is not done. A Task due today
-// is not overdue until the next day begins in Thailand, whatever its time (D23, A5).
-func isOverdue(dueDate time.Time, progress int, today string) bool {
-	return progress < 100 && dueDate.Format(dateLayout) < today
-}
-
 // toTask shapes a stored Task; categoryName is the name of its Category, if any.
 func (s *server) toTask(t database.Task, categoryName *string, today string) Task {
 	var category *Category
@@ -71,14 +53,14 @@ func (s *server) toTask(t database.Task, categoryName *string, today string) Tas
 	return Task{
 		ID:          t.ID,
 		Name:        t.Name,
-		DueDate:     t.DueDate.Format(dateLayout),
+		DueDate:     t.DueDate.Format(planner.DateLayout),
 		StartDate:   formatDate(t.StartDate),
 		StartTime:   formatTime(t.StartTime),
 		EndTime:     formatTime(t.EndTime),
 		Priority:    t.Priority,
 		Progress:    progress,
-		Status:      statusOf(progress),
-		IsOverdue:   isOverdue(t.DueDate, progress, today),
+		Status:      planner.StatusOf(progress),
+		IsOverdue:   planner.IsOverdue(t.DueDate, progress, today),
 		Note:        t.Note,
 		Category:    category,
 		CompletedAt: t.CompletedAt,
@@ -91,7 +73,7 @@ func formatDate(d *time.Time) *string {
 	if d == nil {
 		return nil
 	}
-	s := d.Format(dateLayout)
+	s := d.Format(planner.DateLayout)
 	return &s
 }
 
@@ -109,7 +91,7 @@ func parseDate(field, value string) (time.Time, error) {
 	if value == "" {
 		return time.Time{}, validation(field, "required", field+" is required")
 	}
-	d, err := time.Parse(dateLayout, value)
+	d, err := time.Parse(planner.DateLayout, value)
 	if err != nil {
 		return time.Time{}, validation(field, "invalid_date", field+" must be a date in YYYY-MM-DD")
 	}
@@ -242,14 +224,6 @@ func (r taskRequest) validate() (taskFields, error) {
 	return f, nil
 }
 
-// completedAt is set when Progress reaches 100 and empty below (D22).
-func completedAt(progress int, now time.Time) *time.Time {
-	if progress < 100 {
-		return nil
-	}
-	return &now
-}
-
 // readTask reads and validates a create or update body, including that its
 // Category is the Owner's own. categoryName is the chosen Category's name, if any.
 func (s *server) readTask(c fiber.Ctx) (f taskFields, categoryID *int64, categoryName *string, err error) {
@@ -282,7 +256,7 @@ func (s *server) createTask(c fiber.Ctx) error {
 		Priority:    f.priority,
 		Progress:    int16(f.progress),
 		Note:        f.note,
-		CompletedAt: completedAt(f.progress, s.opts.Now()),
+		CompletedAt: planner.CompletedAt(f.progress, s.opts.Now()),
 		CategoryID:  categoryID,
 	})
 	if err != nil {

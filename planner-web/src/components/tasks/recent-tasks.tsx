@@ -37,7 +37,7 @@ export function RecentTasks({ tasks, failed, onOpen }: Props) {
           <button
             type="button"
             onClick={() => onOpen(task)}
-            aria-label={`แก้ไขงาน ${task.name}`}
+            aria-label={`ดูงาน ${task.name}`}
             className="-mx-2 flex w-[calc(100%+1rem)] items-start gap-3 rounded-xl px-2 py-1.5 text-left hover:bg-primary-soft/60 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
           >
             <span

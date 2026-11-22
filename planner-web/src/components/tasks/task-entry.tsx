@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
 import type { Task, TaskListResponse } from "@/lib/api/types";
 import { RecentTasks } from "./recent-tasks";
-import { TaskEditDialog } from "./task-edit-dialog";
+import { TaskDialog } from "./task-dialog";
 import { TaskForm } from "./task-form";
 
 const RECENT_COUNT = 10;
@@ -52,7 +52,7 @@ export function TaskEntry() {
         <h2 className="mb-4 text-lg font-semibold">งานล่าสุด</h2>
         <RecentTasks tasks={recent} failed={failed} onOpen={setEditing} />
       </section>
-      <TaskEditDialog task={editing} onClose={() => setEditing(null)} onSaved={saved} onDeleted={deleted} />
+      <TaskDialog task={editing} onClose={() => setEditing(null)} onSaved={saved} onDeleted={deleted} />
     </div>
   );
 }

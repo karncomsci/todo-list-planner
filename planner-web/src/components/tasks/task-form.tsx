@@ -4,8 +4,9 @@ import { LoaderCircle, Trash2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/date-picker";
+import { TimeInput } from "@/components/time-input";
 import { api, ApiError } from "@/lib/api/client";
-import { errorText } from "@/lib/api/messages";
+import { errorText, fieldLabels } from "@/lib/api/messages";
 import type {
   Priority,
   Task,
@@ -89,6 +90,8 @@ export function TaskForm({ task, onSaved, onDeleted, onCancel }: Props) {
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [busy, setBusy] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // Saving an edit asks first, naming the fields that changed.
+  const [confirmingSave, setConfirmingSave] = useState(false);
   // The add form and an edit dialog can share a page, so element IDs are per form.
   const idPrefix = `task${useId()}`;
 
@@ -104,8 +107,17 @@ export function TaskForm({ task, onSaved, onDeleted, onCancel }: Props) {
     formRef.current?.querySelector<HTMLElement>(`[name="${field}"]`)?.focus();
   }
 
+  const changedFields = task
+    ? (Object.keys(values) as Field[]).filter((field) => values[field] !== valuesOf(task)[field])
+    : [];
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (task && !confirmingSave) {
+      setConfirmingSave(true);
+      return;
+    }
+    setConfirmingSave(false);
     setErrors({});
     setBusy(true);
     try {
@@ -234,15 +246,14 @@ export function TaskForm({ task, onSaved, onDeleted, onCancel }: Props) {
           error={errors.startTime}
           errorId={describedBy("startTime")}
         >
-          <input
+          <TimeInput
             id={`${idPrefix}-startTime`}
             name="startTime"
-            type="time"
+            label="เวลาเริ่ม"
             value={values.startTime}
-            onChange={(event) => set("startTime", event.target.value)}
-            aria-invalid={invalid("startTime")}
-            aria-describedby={describedBy("startTime")}
-            className={inputClass}
+            onChange={(value) => set("startTime", value)}
+            invalid={invalid("startTime")}
+            errorId={describedBy("startTime")}
           />
         </FieldShell>
         <FieldShell
@@ -252,15 +263,14 @@ export function TaskForm({ task, onSaved, onDeleted, onCancel }: Props) {
           error={errors.endTime}
           errorId={describedBy("endTime")}
         >
-          <input
+          <TimeInput
             id={`${idPrefix}-endTime`}
             name="endTime"
-            type="time"
+            label="เวลาสิ้นสุด"
             value={values.endTime}
-            onChange={(event) => set("endTime", event.target.value)}
-            aria-invalid={invalid("endTime")}
-            aria-describedby={describedBy("endTime")}
-            className={inputClass}
+            onChange={(value) => set("endTime", value)}
+            invalid={invalid("endTime")}
+            errorId={describedBy("endTime")}
           />
         </FieldShell>
       </div>
@@ -364,7 +374,47 @@ export function TaskForm({ task, onSaved, onDeleted, onCancel }: Props) {
         />
       </FieldShell>
 
-      {confirmingDelete ? (
+      {confirmingSave ? (
+        <div
+          role="alertdialog"
+          aria-labelledby={`${idPrefix}-save-title`}
+          aria-describedby={`${idPrefix}-save-changes`}
+          className="rounded-xl border border-primary/40 bg-primary-soft/50 p-4"
+        >
+          <p id={`${idPrefix}-save-title`} className="font-medium">
+            บันทึกการแก้ไขงาน “{task?.name}”?
+          </p>
+          <p id={`${idPrefix}-save-changes`} className="mt-1 text-sm text-muted">
+            {changedFields.length > 0
+              ? `สิ่งที่เปลี่ยน: ${changedFields.map((field) => fieldLabels[field]).join(", ")}`
+              : "ยังไม่มีอะไรเปลี่ยน"}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="submit"
+              disabled={busy}
+              autoFocus
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {busy && (
+                <LoaderCircle
+                  className="size-4 animate-spin motion-reduce:animate-none"
+                  aria-hidden
+                />
+              )}
+              ยืนยันบันทึก
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingSave(false)}
+              disabled={busy}
+              className="rounded-xl border border-border px-4 py-2 text-sm hover:bg-primary-soft hover:text-primary"
+            >
+              กลับไปแก้ต่อ
+            </button>
+          </div>
+        </div>
+      ) : confirmingDelete ? (
         <div
           role="alertdialog"
           aria-labelledby={`${idPrefix}-delete-title`}

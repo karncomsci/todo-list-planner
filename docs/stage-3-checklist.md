@@ -22,7 +22,7 @@ Stage 3 adds the Overview (ภาพรวม), the first page after sign-in. Ev
 - [ ] It lists every Task covering today, including the multi-day one; Tasks due tomorrow or yesterday are not here
 - [ ] Tasks without a time come first, then timed Tasks by start time; each shows its time, Status and Priority colour
 - [ ] The done Task is struck through with a filled tick
-- [ ] Ticking a Task's circle shows "ทำเสร็จแล้ว" and strikes it through; clicking a Task opens "แก้ไขงาน", and saving or deleting updates the card
+- [ ] Ticking a Task's circle shows "ทำเสร็จแล้ว" and strikes it through; clicking a Task shows it, แก้ไข opens the form, and saving or deleting updates the card
 - [ ] With no Tasks today the card says "วันนี้ไม่มีงาน"
 
 ### งานเลยกำหนด (story 37, D23)

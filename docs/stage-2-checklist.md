@@ -26,7 +26,7 @@ Stage 2 adds the day, week and year Views to the Calendar on computers. The phon
 - [ ] Tasks without a time sit in the "ทั้งวัน" row at the top; a multi-day Task is one bar across its days there
 - [ ] A timed Task sits from its start time to its end time; a timed Task over two days runs from its start time to the end of the first day and continues the next day up to its end time
 - [ ] Colours follow Priority; an Overdue Task is red on its due date; a done Task is struck through and faded
-- [ ] The circle ticks a Task done ("ทำเสร็จแล้ว"); clicking the Task opens "แก้ไขงาน" over the Calendar; saving or deleting updates the week at once
+- [ ] The circle ticks a Task done ("ทำเสร็จแล้ว"); clicking the Task shows it over the Calendar, and แก้ไข opens the form; saving or deleting updates the week at once
 
 ### Day View (วัน)
 
@@ -40,7 +40,7 @@ Stage 2 adds the day, week and year Views to the Calendar on computers. The phon
 - [ ] The title is the BE year, such as "พ.ศ. 2569"; twelve months are shown, each titled with its BE year, such as "มกราคม 2569"
 - [ ] Each month's weeks start on จันทร์; today is marked
 - [ ] Tasks appear in their months with Priority colours, red Overdue and struck-through done; a busy day shows "+N" for the rest
-- [ ] Clicking a Task opens "แก้ไขงาน"; saving updates the year at once
+- [ ] Clicking a Task shows it, and แก้ไข opens the form; saving updates the year at once
 - [ ] ‹ and › move to the previous and next year
 
 ### Theme

@@ -3,16 +3,17 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 
 	"planner-api/internal/auth"
+	"planner-api/internal/config"
 	"planner-api/internal/database"
 	"planner-api/internal/httpapi"
 )
@@ -28,16 +29,12 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		return errors.New("DATABASE_URL is required")
-	}
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	cfg, err := config.Load(os.Getenv)
+	if err != nil {
+		return err
 	}
 
-	pool, err := database.Connect(ctx, databaseURL)
+	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err
 	}
@@ -47,7 +44,7 @@ func run() error {
 		return err
 	}
 
-	created, err := auth.EnsureOwner(ctx, database.New(pool), os.Getenv("OWNER_EMAIL"), os.Getenv("OWNER_PASSWORD"))
+	created, err := auth.EnsureOwner(ctx, database.New(pool), cfg.OwnerEmail, cfg.OwnerPassword)
 	if err != nil {
 		return err
 	}
@@ -55,9 +52,9 @@ func run() error {
 		slog.Info("created the Owner from OWNER_EMAIL and OWNER_PASSWORD")
 	}
 
-	app := httpapi.New(pool, httpapi.Options{SecureCookie: os.Getenv("COOKIE_SECURE") == "true"})
-	slog.Info("api listening", "port", port)
-	return app.Listen(":"+port, fiber.ListenConfig{
+	app := httpapi.New(pool, httpapi.Options{SecureCookie: cfg.SecureCookie})
+	slog.Info("api listening", "port", cfg.Port)
+	return app.Listen(":"+strconv.Itoa(cfg.Port), fiber.ListenConfig{
 		GracefulContext:       ctx,
 		ShutdownTimeout:       10 * time.Second,
 		DisableStartupMessage: true,

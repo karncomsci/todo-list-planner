@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"planner-api/internal/database"
+	"planner-api/internal/planner"
 )
 
 const (
@@ -71,7 +72,7 @@ func (s *server) exportBackup(c fiber.Ctx) error {
 		backup.Tasks = append(backup.Tasks, BackupTask{
 			taskRequest: taskRequest{
 				Name:       t.Name,
-				DueDate:    t.DueDate.Format(dateLayout),
+				DueDate:    t.DueDate.Format(planner.DateLayout),
 				StartDate:  formatDate(t.StartDate),
 				StartTime:  formatTime(t.StartTime),
 				EndTime:    formatTime(t.EndTime),
@@ -108,7 +109,7 @@ func (s *server) exportBackup(c fiber.Ctx) error {
 	}
 	backup.Settings = Settings{WaterGoal: int(goal)}
 
-	filename := fmt.Sprintf("planner-backup-%s.json", now.In(thailand).Format(dateLayout))
+	filename := fmt.Sprintf("planner-backup-%s.json", planner.DateOf(now))
 	c.Set(fiber.HeaderContentDisposition, fmt.Sprintf(`attachment; filename="%s"`, filename))
 	return c.JSON(backup)
 }

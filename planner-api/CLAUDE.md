@@ -11,10 +11,12 @@ Go 1.27, Fiber v3, pgx v5, goose v3 (as a library), sqlc.
 
 ## Layout
 
-- `main.go`: reads the environment (`DATABASE_URL`, `PORT`, `OWNER_EMAIL`, `OWNER_PASSWORD`, `COOKIE_SECURE`), connects, migrates, seeds the Owner, serves.
+- `cmd/api/main.go`: loads the settings, connects, migrates, seeds the Owner, serves. A second program (such as a stage 7 notifier) gets its own `cmd/<name>/`.
+- `internal/config`: reads and checks the environment (`DATABASE_URL`, `PORT`, `OWNER_EMAIL`, `OWNER_PASSWORD`, `COOKIE_SECURE`), reporting every bad setting at once.
+- `internal/planner`: domain rules that need neither HTTP nor SQL: the date in Thailand (D9), Status (D21), Overdue (D23), completed-at time (D22). Put a rule here when more than the HTTP layer needs it; handlers call it rather than repeating it.
 - `internal/database`: connection pool, migrations, and the sqlc-generated `Queries`.
 - `internal/auth`: password hashing, session tokens, and seeding the Owner.
-- `internal/httpapi`: routes, handlers, and the error shape. Handlers return `*httpapi.Error` for expected failures (use `validation(field, code, message)` for a broken field rule); anything else becomes a logged 500.
+- `internal/httpapi`: routes, handlers, request checks and response shapes, and the error shape; one file per resource. Handlers return `*httpapi.Error` for expected failures (use `validation(field, code, message)` for a broken field rule); anything else becomes a logged 500.
 
 ## Routes and the session
 
@@ -39,4 +41,4 @@ Run from this folder unless noted. The database must be up first: `docker compos
 
 ## Tests (T1, T2)
 
-Tests drive the real Fiber app with HTTP requests against a real PostgreSQL database: send a request, assert on the response and on what later requests see. Mocking the database or asserting on internal functions is out of pattern. The harness in `internal/httpapi/harness_test.go` gives each test its own freshly migrated database, so tests are independent; extend it rather than writing a second one.
+Tests drive the real Fiber app with HTTP requests against a real PostgreSQL database: send a request, assert on the response and on what later requests see. Mocking the database or asserting on internal functions is out of pattern; the one exception is `internal/config`, tested on its own because it runs before the app exists. The harness in `internal/httpapi/harness_test.go` gives each test its own freshly migrated database, so tests are independent; extend it rather than writing a second one.
